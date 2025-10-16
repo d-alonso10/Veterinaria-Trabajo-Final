@@ -48,7 +48,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles - Coherente con Dashboard */
         .sidebar {
             width: 280px;
             background: var(--gradient-primary);
@@ -183,7 +182,6 @@
             text-align: center;
         }
 
-        /* Main Content Styles */
         .content {
             flex: 1;
             padding: 0;
@@ -241,7 +239,6 @@
             margin: 0 auto;
         }
 
-        /* Botones - Coherentes con Dashboard */
         .btn {
             padding: 16px 28px;
             border: none;
@@ -334,7 +331,6 @@
             font-size: 0.9em;
         }
 
-        /* Panel Grid Mejorado */
         .panel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -413,7 +409,6 @@
             margin-bottom: 25px;
         }
 
-        /* Form Styles Mejorados */
         .form-group {
             margin-bottom: 20px;
         }
@@ -467,7 +462,6 @@
             justify-content: center;
         }
 
-        /* Mensajes de estado mejorados */
         .mensaje {
             padding: 20px 25px;
             margin: 0 0 30px 0;
@@ -513,7 +507,6 @@
             color: var(--text-dark);
         }
 
-        /* Warning Cards */
         .warning-card {
             background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
             border: 2px dashed var(--warning-color);
@@ -549,7 +542,6 @@
             line-height: 1.6;
         }
 
-        /* System Status */
         .system-status {
             background: var(--white);
             padding: 25px;
@@ -597,7 +589,6 @@
             color: var(--primary-dark);
         }
 
-        /* Responsive Design */
         @media (max-width: 1200px) {
             .container {
                 flex-direction: column;
@@ -660,7 +651,6 @@
             }
         }
 
-        /* Loading animation */
         .loading-dots {
             display: inline-flex;
             gap: 4px;
@@ -685,7 +675,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar Menu - Coherente con Dashboard -->
         <div class="sidebar">
             <div class="logo">
                 <h1><span class="logo-icon">🐕</span> Terán Vet</h1>
@@ -700,7 +689,6 @@
             </div>
             
             <ul class="menu">
-                <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item">
                     <a href="dashboard.jsp">
@@ -721,7 +709,6 @@
                     </a>
                 </li>
                 
-                <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
                     <a href="Clientes.jsp">
@@ -736,7 +723,6 @@
                     </a>
                 </li>
                 
-                <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item">
                     <a href="GroomerControlador">
@@ -751,7 +737,6 @@
                     </a>
                 </li>
                 
-                <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
                     <a href="pagos.jsp">
@@ -766,14 +751,13 @@
                     </a>
                 </li>
                 
-                <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
                     <a href="reportes.jsp">
                         <span class="menu-icon">📈</span>
                         <span>Reportes</span>
                     </a>
-                </li>
+                </li> 
                 <li class="menu-item">
                     <a href="auditoria.jsp">
                         <span class="menu-icon">🔍</span>
@@ -781,7 +765,6 @@
                     </a>
                 </li>
                 
-                <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item active">
                     <a href="UtilidadesControlador">
@@ -798,7 +781,6 @@
             </ul>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="header">
                 <div class="header-top">
@@ -818,7 +800,6 @@
             </div>
 
             <div class="main-content">
-                <!-- Mensajes -->
                 <% if (request.getAttribute("mensaje") != null) { 
                     String mensaje = (String) request.getAttribute("mensaje");
                     String tipoClase = mensaje.contains("❌") ? "error" : 
@@ -830,7 +811,6 @@
                     </div>
                 <% } %>
 
-                <!-- Advertencia de Operaciones Críticas -->
                 <div class="warning-card">
                     <span class="warning-icon">⚠️</span>
                     <div class="warning-title">Operaciones Críticas</div>
@@ -840,7 +820,6 @@
                     </div>
                 </div>
 
-                <!-- Estado del Sistema -->
                 <div class="system-status">
                     <h3 style="color: var(--text-dark); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
                         <span>📊</span> Estado del Sistema
@@ -869,9 +848,7 @@
                     </div>
                 </div>
 
-                <!-- Panel de Utilidades -->
                 <div class="panel-grid">
-                    <!-- Limpieza de Datos -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon">🧹</div>
@@ -904,7 +881,6 @@
                         </form>
                     </div>
 
-                    <!-- Backup del Sistema -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon">💾</div>
@@ -936,7 +912,6 @@
                         </form>
                     </div>
 
-                    <!-- Verificación de Integridad -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon">🔍</div>
@@ -960,7 +935,6 @@
                         </form>
                     </div>
 
-                    <!-- Auditoría del Sistema -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon">📋</div>
@@ -989,7 +963,6 @@
                         </form>
                     </div>
 
-                    <!-- Gestión de Notificaciones -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon">🔔</div>
@@ -1010,7 +983,6 @@
                         </div>
                     </div>
 
-                    <!-- Reporte de Problemas -->
                     <div class="card">
                         <div class="card-header">
                             <div class="card-icon">⚠️</div>
@@ -1032,7 +1004,6 @@
                     </div>
                 </div>
 
-                <!-- Navegación -->
                 <div style="display: flex; gap: 15px; margin-top: 40px; justify-content: center; flex-wrap: wrap;">
                     <a href="dashboard.jsp" class="btn btn-primary">
                         <span>📊 Volver al Dashboard</span>

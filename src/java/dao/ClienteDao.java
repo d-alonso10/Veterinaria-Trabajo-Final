@@ -115,7 +115,6 @@ public class ClienteDao {
         return clientesFrecuentes;
     }
 
-    // MÉTODO: Buscar clientes por término
     public List<Cliente> buscarClientes(String termino) {
         List<Cliente> clientes = new ArrayList<>();
 
@@ -166,8 +165,6 @@ public class ClienteDao {
         return clientes;
     }
 
-// MÉTODO CORREGIDO: Listar todos los clientes
-    // MÉTODO CORREGIDO: Listar todos los clientes
     public List<Cliente> listarTodosClientes() {
         List<Cliente> clientes = new ArrayList<>();
         Connection localCon = null;
@@ -199,15 +196,15 @@ public class ClienteDao {
 
         } catch (ClassNotFoundException e) {
             System.err.println("Error: Driver no encontrado - " + e.getMessage());
-            return null; // Esto podría estar causando el problema
+            return null; 
         } catch (SQLException e) {
             System.err.println("Error SQL al listar clientes: " + e.getMessage());
             e.printStackTrace();
-            return null; // Esto podría estar causando el problema
+            return null; 
         } catch (Exception e) {
             System.err.println("Error general al listar clientes: " + e.getMessage());
             e.printStackTrace();
-            return null; // Esto podría estar causando el problema
+            return null; 
         } finally {
             try {
                 if (localRs != null) {

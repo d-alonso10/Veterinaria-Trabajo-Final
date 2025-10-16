@@ -49,7 +49,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles - Coherente con Dashboard */
         .sidebar {
             width: 280px;
             background: var(--gradient-primary);
@@ -184,7 +183,6 @@
             text-align: center;
         }
 
-        /* Main Content Styles */
         .content {
             flex: 1;
             padding: 0;
@@ -242,7 +240,6 @@
             margin: 0 auto;
         }
 
-        /* Botones - Coherentes con Dashboard */
         .btn {
             padding: 16px 28px;
             border: none;
@@ -331,7 +328,6 @@
             margin: 2px;
         }
 
-        /* Search Box Mejorado */
         .search-box {
             background: var(--white);
             padding: 30px;
@@ -378,7 +374,6 @@
             transform: translateY(-2px);
         }
 
-        /* Stats Container Mejorado */
         .stats-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -435,7 +430,6 @@
             letter-spacing: 1px;
         }
 
-        /* Table Container Mejorado */
         .table-container {
             background: var(--white);
             border-radius: var(--radius);
@@ -489,7 +483,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* Badges y Estados Mejorados */
         .id-badge {
             background: var(--primary-light);
             color: var(--text-dark);
@@ -531,7 +524,6 @@
             font-size: 0.9em;
         }
 
-        /* Action Buttons Mejorados */
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -600,7 +592,6 @@
             box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
         }
 
-        /* Empty State Mejorado */
         .empty-state {
             text-align: center;
             padding: 80px 40px;
@@ -635,7 +626,6 @@
             line-height: 1.8;
         }
 
-        /* Navigation Mejorado */
         .navigation {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -650,7 +640,6 @@
             font-size: 1em;
         }
 
-        /* Mensajes de estado mejorados */
         .mensaje {
             padding: 20px 25px;
             margin: 0 0 30px 0;
@@ -690,7 +679,6 @@
             color: var(--text-dark);
         }
 
-        /* Responsive Design - Coherente con Dashboard */
         @media (max-width: 1200px) {
             .container {
                 flex-direction: column;
@@ -765,7 +753,6 @@
             }
         }
 
-        /* Efectos especiales adicionales */
         .floating {
             animation: floating 3s ease-in-out infinite;
         }
@@ -806,7 +793,6 @@
             40% { transform: scale(1); }
         }
 
-        /* Filtros adicionales */
         .filters-container {
             background: var(--white);
             padding: 25px;
@@ -849,7 +835,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar Menu - Coherente con Dashboard -->
         <div class="sidebar">
             <div class="logo">
                 <h1><span class="logo-icon">🐕</span> Terán Vet</h1>
@@ -864,7 +849,6 @@
             </div>
             
             <ul class="menu">
-                <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item">
                     <a href="dashboard.jsp">
@@ -885,7 +869,6 @@
                     </a>
                 </li>
                 
-                <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item active">
                     <a href="Clientes.jsp">
@@ -918,7 +901,6 @@
                     </a>
                 </li>
                 
-                <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item">
                     <a href="GroomerControlador">
@@ -933,7 +915,6 @@
                     </a>
                 </li>
                 
-                <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
                     <a href="pagos.jsp">
@@ -954,7 +935,6 @@
                     </a>
                 </li>
                 
-                <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
                     <a href="ReporteControlador">
@@ -969,7 +949,6 @@
                     </a>
                 </li>
                 
-                <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item">
                     <a href="configuracion.jsp">
@@ -980,7 +959,6 @@
             </ul>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="header">
                 <div class="header-top">
@@ -1000,14 +978,12 @@
             </div>
 
             <div class="main-content">
-                <!-- Mensajes -->
                 <% if (request.getAttribute("mensaje") != null) { %>
                     <div class="mensaje <%= request.getAttribute("mensaje").toString().contains("✅") ? "exito" : "error" %>">
                         <%= request.getAttribute("mensaje") %>
                     </div>
                 <% } %>
 
-                <!-- Búsqueda rápida mejorada -->
                 <div class="search-box">
                     <form action="ClienteControlador" method="POST" class="search-form" id="searchForm">
                         <input type="hidden" name="accion" value="buscar">

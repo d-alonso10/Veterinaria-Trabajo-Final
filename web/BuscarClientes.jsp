@@ -48,7 +48,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
         .sidebar {
             width: 280px;
             background: var(--gradient-primary);
@@ -183,7 +182,6 @@
             text-align: center;
         }
 
-        /* Main Content Styles */
         .content {
             flex: 1;
             padding: 0;
@@ -241,7 +239,6 @@
             margin: 0 auto;
         }
 
-        /* Mensajes de estado */
         .mensaje {
             padding: 20px 25px;
             margin: 0 0 30px 0;
@@ -283,7 +280,6 @@
             color: #1565c0;
         }
 
-        /* Botones */
         .btn {
             padding: 16px 28px;
             border: none;
@@ -387,7 +383,6 @@
             font-size: 0.9em;
         }
 
-        /* Search Box */
         .search-box {
             background: var(--white);
             border-radius: var(--radius);
@@ -459,7 +454,6 @@
             z-index: 1;
         }
 
-        /* Stats Card */
         .stats-card {
             background: var(--white);
             padding: 25px;
@@ -503,7 +497,6 @@
             line-height: 1.6;
         }
 
-        /* Results Box */
         .results-box {
             background: var(--white);
             border-radius: var(--radius);
@@ -524,7 +517,6 @@
             gap: 12px;
         }
 
-        /* Table Container */
         .table-container {
             background: var(--white);
             border-radius: var(--radius);
@@ -572,7 +564,6 @@
             transform: translateX(5px);
         }
 
-        /* Badges */
         .id-badge {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
             color: var(--text-dark);
@@ -594,7 +585,6 @@
             border: 2px solid var(--primary-color);
         }
 
-        /* Contact Info */
         .contact-info {
             display: flex;
             align-items: center;
@@ -608,7 +598,6 @@
             color: var(--text-dark);
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 80px 40px;
@@ -668,7 +657,6 @@
             border-bottom: none;
         }
 
-        /* Navigation */
         .navigation {
             display: flex;
             gap: 15px;
@@ -677,7 +665,6 @@
             flex-wrap: wrap;
         }
 
-        /* Responsive Design */
         @media (max-width: 1200px) {
             .container {
                 flex-direction: column;
@@ -752,7 +739,6 @@
             }
         }
 
-        /* Animation Effects */
         .floating {
             animation: floating 3s ease-in-out infinite;
         }
@@ -772,7 +758,6 @@
             100% { transform: scale(1); }
         }
 
-        /* Loading animation */
         .loading-dots {
             display: inline-flex;
             gap: 4px;
@@ -794,7 +779,6 @@
             40% { transform: scale(1); }
         }
 
-        /* Highlight effect for search terms */
         .highlight {
             background-color: #FFEB3B;
             padding: 2px 4px;
@@ -805,7 +789,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar Menu -->
         <div class="sidebar">
             <div class="logo">
                 <h1><span class="logo-icon">🐕</span> Terán Vet</h1>
@@ -820,7 +803,6 @@
             </div>
             
             <ul class="menu">
-                <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item">
                     <a href="dashboard.jsp">
@@ -841,7 +823,6 @@
                     </a>
                 </li>
                 
-                <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
                     <a href="Clientes.jsp">
@@ -874,7 +855,6 @@
                     </a>
                 </li>
                 
-                <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item">
                     <a href="GroomerControlador">
@@ -889,7 +869,6 @@
                     </a>
                 </li>
                 
-                <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
                     <a href="pagos.jsp">
@@ -910,7 +889,6 @@
                     </a>
                 </li>
                 
-                <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
                     <a href="ReporteControlador">
@@ -925,10 +903,9 @@
                     </a>
                 </li>
                 
-                <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item">
-                    <a href="configuracion.jsp">
+                    <a href="ConfiguracionControlador?accion=listar">
                         <span class="menu-icon">⚙️</span>
                         <span>Configuración</span>
                     </a>
@@ -936,7 +913,6 @@
             </ul>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="header">
                 <div class="header-top">
@@ -952,7 +928,6 @@
             </div>
 
             <div class="main-content">
-                <!-- Mensajes -->
                 <% 
                     String mensaje = (String) request.getAttribute("mensaje");
                     String terminoBusqueda = (String) request.getAttribute("terminoBusqueda");
@@ -966,7 +941,6 @@
                     </div>
                 <% } %>
                 
-                <!-- Formulario de búsqueda -->
                 <div class="search-box">
                     <form action="ClienteControlador" method="POST" class="search-form" id="searchForm">
                         <input type="hidden" name="accion" value="buscar">
@@ -981,7 +955,6 @@
                     </div>
                 </div>
 
-                <!-- Estadísticas -->
                 <% if (totalResultados != null && terminoBusqueda != null) { %>
                     <div class="stats-card">
                         <div class="stats-icon">📊</div>
@@ -994,7 +967,6 @@
                     </div>
                 <% } %>
 
-                <!-- Resultados -->
                 <% if (clientes != null && !clientes.isEmpty()) { %>
                     <div class="results-box">
                         <h3 class="results-title">📋 Clientes Encontrados</h3>
@@ -1074,7 +1046,6 @@
                     </div>
                 <% } %>
 
-                <!-- Navegación -->
                 <div class="navigation">
                     <a href="InsertarCliente.jsp" class="btn btn-success">➕ Nuevo Cliente</a>
                     <a href="ClienteControlador?accion=listarFrecuentes" class="btn btn-info">🏆 Clientes Frecuentes</a>

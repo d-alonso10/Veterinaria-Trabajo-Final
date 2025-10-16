@@ -1036,7 +1036,7 @@
                 <!-- Sistema -->
                 <li class="menu-section">Sistema</li>
                 <li class="menu-item">
-                    <a href="configuracion.jsp">
+                    <a href="ConfiguracionControlador?accion=listar">
                         <span class="menu-icon">⚙️</span>
                         <span>Configuración</span>
                     </a>

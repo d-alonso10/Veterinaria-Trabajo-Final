@@ -50,7 +50,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
         .sidebar {
             width: 280px;
             background: var(--gradient-primary);
@@ -185,7 +184,6 @@
             text-align: center;
         }
 
-        /* Main Content Styles */
         .content {
             flex: 1;
             padding: 0;
@@ -243,7 +241,6 @@
             margin: 0 auto;
         }
 
-        /* Botones */
         .btn {
             padding: 16px 28px;
             border: none;
@@ -365,7 +362,6 @@
             margin: 2px;
         }
 
-        /* Mensajes de estado */
         .mensaje {
             padding: 20px 25px;
             margin: 0 0 30px 0;
@@ -395,7 +391,6 @@
             color: var(--text-dark);
         }
 
-        /* Client Info Card */
         .client-card {
             background: var(--gradient-primary);
             padding: 30px;
@@ -439,7 +434,6 @@
             font-weight: 500;
         }
 
-        /* Stats Card */
         .stats-card {
             background: var(--white);
             padding: 30px;
@@ -483,7 +477,6 @@
             line-height: 1.5;
         }
 
-        /* Table Container */
         .table-container {
             background: var(--white);
             border-radius: var(--radius);
@@ -536,7 +529,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
 
-        /* Badges and Status */
         .id-badge {
             background: var(--primary-light);
             color: var(--text-dark);
@@ -574,7 +566,6 @@
             font-size: 0.9em;
         }
 
-        /* Action Buttons */
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -618,7 +609,6 @@
             background: linear-gradient(135deg, #8e44ad 0%, #7d3c98 100%);
         }
 
-        /* Gender specific colors */
         .male {
             color: #3498db;
             font-weight: 600;
@@ -629,7 +619,6 @@
             font-weight: 600;
         }
 
-        /* Navigation */
         .navigation {
             display: flex;
             gap: 20px;
@@ -638,7 +627,6 @@
             flex-wrap: wrap;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 80px 40px;
@@ -670,13 +658,11 @@
             opacity: 0.7;
         }
 
-        /* Table Wrapper for Responsive */
         .table-wrapper {
             overflow-x: auto;
             border-radius: var(--radius);
         }
 
-        /* Animation Effects */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -697,7 +683,6 @@
             animation: floating 3s ease-in-out infinite;
         }
 
-        /* Loading animation */
         .loading-dots {
             display: inline-flex;
             gap: 4px;
@@ -719,7 +704,6 @@
             40% { transform: scale(1); }
         }
 
-        /* Responsive Design */
         @media (max-width: 1200px) {
             .container {
                 flex-direction: column;
@@ -805,7 +789,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar Menu -->
         <div class="sidebar">
             <div class="logo">
                 <h1><span class="logo-icon">🐕</span> Terán Vet</h1>
@@ -820,7 +803,6 @@
             </div>
             
             <ul class="menu">
-                <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item">
                     <a href="dashboard.jsp">
@@ -841,7 +823,6 @@
                     </a>
                 </li>
                 
-                <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
                     <a href="Clientes.jsp">
@@ -886,7 +867,6 @@
                     </a>
                 </li>
                 
-                <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item">
                     <a href="GroomerControlador">
@@ -901,7 +881,6 @@
                     </a>
                 </li>
                 
-                <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
                     <a href="pagos.jsp">
@@ -922,7 +901,6 @@
                     </a>
                 </li>
                 
-                <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
                     <a href="ReporteControlador">
@@ -937,7 +915,6 @@
                     </a>
                 </li>
                 
-                <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item">
                     <a href="configuracion.jsp">
@@ -948,7 +925,6 @@
             </ul>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="header">
                 <div class="header-top">
@@ -964,7 +940,6 @@
             </div>
 
             <div class="main-content">
-                <!-- Mensajes -->
                 <% String mensaje = (String) request.getAttribute("mensaje"); %>
                 <% if (mensaje != null) { %>
                     <div class="mensaje <%= mensaje.contains("✅") ? "exito" : mensaje.contains("❌") ? "error" : "info" %>">

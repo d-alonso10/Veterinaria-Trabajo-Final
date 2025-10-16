@@ -47,7 +47,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles - Coherente con Dashboard */
         .sidebar {
             width: 280px;
             background: var(--gradient-primary);
@@ -171,7 +170,6 @@
             text-align: center;
         }
 
-        /* Main Content Styles */
         .content {
             flex: 1;
             padding: 0;
@@ -229,7 +227,6 @@
             margin: 0 auto;
         }
 
-        /* Botones - Coherentes con Dashboard */
         .btn {
             padding: 16px 28px;
             border: none;
@@ -311,7 +308,6 @@
             font-size: 0.9em;
         }
 
-        /* Form Styles Mejorados */
         .form-container {
             background: var(--white);
             padding: 40px;
@@ -418,7 +414,6 @@
             color: var(--danger-color);
         }
 
-        /* Section Styles Mejorados */
         .form-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             padding: 25px;
@@ -466,7 +461,6 @@
             justify-content: center;
         }
 
-        /* Mensajes de estado mejorados */
         .mensaje {
             padding: 20px 25px;
             margin: 0 0 30px 0;
@@ -516,7 +510,6 @@
             display: block;
         }
 
-        /* Responsive Design - Coherente con Dashboard */
         @media (max-width: 1200px) {
             .container {
                 flex-direction: column;
@@ -583,7 +576,6 @@
             }
         }
 
-        /* Efectos especiales adicionales */
         .floating {
             animation: floating 3s ease-in-out infinite;
         }
@@ -617,7 +609,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar Menu - Coherente con Dashboard -->
         <div class="sidebar">
             <div class="logo">
                 <h1><span class="logo-icon">🐕</span> Terán Vet</h1>
@@ -632,7 +623,6 @@
             </div>
             
             <ul class="menu">
-                <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item">
                     <a href="dashboard.jsp">
@@ -653,7 +643,6 @@
                     </a>
                 </li>
                 
-                <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
                     <a href="Clientes.jsp">
@@ -686,7 +675,6 @@
                     </a>
                 </li>
                 
-                <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item active">
                     <a href="GroomerControlador">
@@ -701,7 +689,6 @@
                     </a>
                 </li>
                 
-                <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
                     <a href="pagos.jsp">
@@ -722,7 +709,6 @@
                     </a>
                 </li>
                 
-                <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
                     <a href="ReporteControlador">
@@ -737,7 +723,6 @@
                     </a>
                 </li>
                 
-                <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item">
                     <a href="configuracion.jsp">
@@ -748,7 +733,6 @@
             </ul>
         </div>
 
-        <!-- Main Content -->
         <div class="content">
             <div class="header">
                 <div class="header-top">
@@ -768,7 +752,6 @@
             </div>
 
             <div class="main-content">
-                <!-- Mensajes -->
                 <% if (request.getAttribute("mensaje") != null) { %>
                     <div class="mensaje <%= request.getAttribute("mensaje").toString().contains("✅") ? "exito" : "error" %>">
                         <%= request.getAttribute("mensaje") %>
