@@ -754,6 +754,30 @@
                     </a>
                 </li>
                 <li class="menu-item">
+                    <a href="ListaDetallesServicios.jsp">
+                        <span class="menu-icon">🔧</span>
+                        <span>Detalles de Servicios</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="CrearDetalleServicio.jsp">
+                        <span class="menu-icon">⚡</span>
+                        <span>Crear Detalle Servicio</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="ListaPaquetesServicios.jsp">
+                        <span class="menu-icon">📦</span>
+                        <span>Paquetes de Servicios</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="CrearPaqueteServicio.jsp">
+                        <span class="menu-icon">🎯</span>
+                        <span>Crear Paquete Servicio</span>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a href="ClienteControlador?accion=listarFrecuentes">
                         <span class="menu-icon">🏆</span>
                         <span>Clientes Frecuentes</span>
@@ -784,21 +808,54 @@
                 <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
-                    <a href="pagos.jsp">
+                    <a href="ListaPagos.jsp">
                         <span class="menu-icon">💳</span>
-                        <span>Pagos</span>
+                        <span>Lista de Pagos</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="facturas.jsp">
+                    <a href="RegistrarPago.jsp">
+                        <span class="menu-icon">💰</span>
+                        <span>Registrar Pago</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="ListaFacturas.jsp">
                         <span class="menu-icon">🧾</span>
-                        <span>Facturas</span>
+                        <span>Lista de Facturas</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="promociones.jsp">
+                    <a href="CrearFactura.jsp">
+                        <span class="menu-icon">📄</span>
+                        <span>Crear Factura</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="ListaPromociones.jsp">
                         <span class="menu-icon">🎁</span>
-                        <span>Promociones</span>
+                        <span>Lista de Promociones</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="CrearPromocion.jsp">
+                        <span class="menu-icon">🎉</span>
+                        <span>Crear Promoción</span>
+                    </a>
+                </li>
+                
+                <!-- Comunicaciones -->
+                <div class="menu-section">Comunicaciones</div>
+                <li class="menu-item">
+                    <a href="ListaNotificaciones.jsp">
+                        <span class="menu-icon">🔔</span>
+                        <span>Lista de Notificaciones</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="CrearNotificacion.jsp">
+                        <span class="menu-icon">📢</span>
+                        <span>Crear Notificación</span>
                     </a>
                 </li>
                 
@@ -819,6 +876,18 @@
                 
                 <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
+                <li class="menu-item">
+                    <a href="ListaUsuarios.jsp">
+                        <span class="menu-icon">👤</span>
+                        <span>Lista de Usuarios</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="CrearUsuario.jsp">
+                        <span class="menu-icon">👥</span>
+                        <span>Crear Usuario</span>
+                    </a>
+                </li>
                 <li class="menu-item">
                     <a href="UtilidadesControlador">
                         <span class="menu-icon">🔧</span>
