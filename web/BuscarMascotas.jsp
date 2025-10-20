@@ -1,5 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.util.List, modelo.MascotaBusquedaDTO"%>
+                <%@page import="java.util.List, modelo.MascotaClienteDTO"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -950,7 +950,7 @@
                 </div>
 
                 <% 
-                    List<MascotaBusquedaDTO> mascotas = (List<MascotaBusquedaDTO>) request.getAttribute("mascotas");
+                    List<MascotaClienteDTO> mascotas = (List<MascotaClienteDTO>) request.getAttribute("mascotas");
                     Integer totalResultados = (Integer) request.getAttribute("totalResultados");
                     String terminoBusqueda = (String) request.getAttribute("terminoBusqueda");
                 %>
@@ -992,7 +992,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <% for (MascotaBusquedaDTO mascota : mascotas) { 
+                                    <% for (MascotaClienteDTO mascota : mascotas) { 
                                         String speciesClass = "species-otro";
                                         if ("perro".equalsIgnoreCase(mascota.getEspecie())) {
                                             speciesClass = "species-perro";
