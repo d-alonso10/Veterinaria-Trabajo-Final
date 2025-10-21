@@ -1,0 +1,168 @@
+# ========================================
+# GITIGNORE PARA PROYECTO VETERINARIA
+# ========================================
+
+# ==========================================
+# ARCHIVOS TEMPORALES CREADOS PARA EJECUCIÓN
+# ==========================================
+
+# Apache Tomcat descargado para pruebas locales
+apache-tomcat-*/
+tomcat.zip
+
+# Lista de archivos Java generada automáticamente
+java-files.txt
+
+# Archivos de compilación temporal
+*.class.temp
+*.jar.temp
+
+# ==========================================
+# ARCHIVOS ESTÁNDAR DE JAVA/NETBEANS
+# ==========================================
+
+# Directorios de compilación de NetBeans
+build/
+dist/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# Archivos privados de NetBeans
+nbproject/private/
+build.xml~
+manifest.mf~
+
+# ==========================================
+# ARCHIVOS DE IDEs
+# ==========================================
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ==========================================
+# ARCHIVOS DE SISTEMA OPERATIVO
+# ==========================================
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+
+# ==========================================
+# ARCHIVOS DE DEPENDENCIAS Y LOGS
+# ==========================================
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Archivos temporales de compilación
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ==========================================
+# ARCHIVOS DE BASE DE DATOS LOCALES
+# ==========================================
+
+# Respaldos de base de datos locales
+*.sql.backup
+*.db.backup
+dump.sql
+
+# Archivos de configuración con credenciales locales
+config/local.properties
+*.local.properties
+
+# ==========================================
+# ARCHIVOS DE TESTING Y DESARROLLO
+# ==========================================
+
+# Archivos de prueba temporal
+test-output/
+target/
+.gradle/
+
+# Coverage reports
+coverage/
+*.coverage
+
+# ==========================================
+# DOCUMENTACIÓN TEMPORAL
+# ==========================================
+
+# Documentación generada automáticamente
+javadoc/
+*.pdf.temp
+*.docx.temp
+
+# ==========================================
+# INSTRUCCIONES PARA EL EQUIPO
+# ==========================================
+
+# MANTENER ESTOS ARCHIVOS IMPORTANTES:
+# - src/ (código fuente Java)
+# - web/ (archivos JSP, CSS, JS)
+# - nbproject/ (configuración de NetBeans - excepto private/)
+# - README.md (documentación del proyecto)
+# - Base de datos Veterinaria.sql (esquema de BD)
+# - stored_procedures_veterinaria.sql (procedimientos almacenados)
+
+# PARA EJECUTAR EL PROYECTO EN OTRA MÁQUINA:
+# 1. Clonar el repositorio
+# 2. Abrir en NetBeans
+# 3. Configurar servidor de aplicaciones (Tomcat/GlassFish)
+# 4. Importar base de datos MySQL desde archivos .sql
+# 5. Verificar configuración de conexión en archivos DAO
+
+# ==========================================
+# CONFIGURACIONES ESPECÍFICAS DEL PROYECTO
+# ==========================================
+
+# Archivos de configuración de servidor específicos
+server.local.xml
+context.local.xml
+tomcat-users.local.xml
+
+# Archivos de despliegue temporal
+*.war.temp
+deploy.temp/
