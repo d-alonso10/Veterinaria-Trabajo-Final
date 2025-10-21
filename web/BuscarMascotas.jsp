@@ -1,5 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-                <%@page import="java.util.List, modelo.MascotaClienteDTO"%>
+<%@page import="java.util.List, modelo.MascotaBusquedaDTO"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -950,7 +950,7 @@
                 </div>
 
                 <% 
-                    List<MascotaClienteDTO> mascotas = (List<MascotaClienteDTO>) request.getAttribute("mascotas");
+                    List<MascotaBusquedaDTO> mascotas = (List<MascotaBusquedaDTO>) request.getAttribute("mascotas");
                     Integer totalResultados = (Integer) request.getAttribute("totalResultados");
                     String terminoBusqueda = (String) request.getAttribute("terminoBusqueda");
                 %>
@@ -961,13 +961,13 @@
                             <% if (totalResultados != null) { %>
                                 <span><%= totalResultados %></span> mascotas encontradas
                                 <% if (terminoBusqueda != null && !terminoBusqueda.isEmpty()) { %>
-                                    para "<%= terminoBusqueda %>"
+                                     para "<%= terminoBusqueda %>"
                                 <% } %>
                             <% } else if (mascotas != null) { %>
                                 <span><%= mascotas.size() %></span> mascotas en resultados
-                            <% } %>
+               z i             <% } %>
                         </div>
-                        <div class="quick-actions">
+                        
                             <a href="InsertarMascota.jsp" class="btn btn-success btn-small">➕ Nueva Mascota</a>
                             <button onclick="exportarResultados()" class="btn btn-secondary btn-small">📊 Exportar</button>
                             <button onclick="limpiarBusqueda()" class="btn btn-warning btn-small">🔄 Limpiar</button>
@@ -992,7 +992,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <% for (MascotaClienteDTO mascota : mascotas) { 
+                                    <% for (MascotaBusquedaDTO mascota : mascotas) { 
                                         String speciesClass = "species-otro";
                                         if ("perro".equalsIgnoreCase(mascota.getEspecie())) {
                                             speciesClass = "species-perro";

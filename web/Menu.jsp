@@ -715,19 +715,19 @@
                 <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item active">
-                    <a href="dashboard.jsp">
+                    <a href="Menu.jsp">
                         <span class="menu-icon">📊</span>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="CitaControlador?accion=todasCitas">
+                    <a href="ProximasCitas.jsp">
                         <span class="menu-icon">📅</span>
                         <span>Citas</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="AtencionControlador">
+                    <a href="ColaAtencion.jsp">
                         <span class="menu-icon">🎯</span>
                         <span>Atención</span>
                     </a>
@@ -736,7 +736,7 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="ListaClientes.jsp">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
@@ -748,7 +748,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ServicioControlador">
+                    <a href="ListaServicios.jsp">
                         <span class="menu-icon">🛠️</span>
                         <span>Servicios</span>
                     </a>
@@ -778,7 +778,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ClienteControlador?accion=listarFrecuentes">
+                    <a href="ListaClientes.jsp">
                         <span class="menu-icon">🏆</span>
                         <span>Clientes Frecuentes</span>
                     </a>
@@ -793,13 +793,13 @@
                 <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item">
-                    <a href="GroomerControlador">
+                    <a href="ListaGroomers.jsp">
                         <span class="menu-icon">✂️</span>
                         <span>Groomers</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="SucursalControlador?accion=listar">
+                    <a href="ListaSucursales.jsp">
                         <span class="menu-icon">🏢</span>
                         <span>Sucursales</span>
                     </a>
@@ -820,7 +820,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ListaFacturas.jsp">
+                    <a href="UtilidadesFacturas.jsp">
                         <span class="menu-icon">🧾</span>
                         <span>Lista de Facturas</span>
                     </a>
@@ -847,7 +847,7 @@
                 <!-- Comunicaciones -->
                 <div class="menu-section">Comunicaciones</div>
                 <li class="menu-item">
-                    <a href="ListaNotificaciones.jsp">
+                    <a href="UtilidadesNotificaciones.jsp">
                         <span class="menu-icon">🔔</span>
                         <span>Lista de Notificaciones</span>
                     </a>
@@ -862,13 +862,13 @@
                 <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
-                    <a href="ReporteControlador">
+                    <a href="ReporteIngresos.jsp">
                         <span class="menu-icon">📈</span>
                         <span>Reportes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="AuditControlador?accion=listar">
+                    <a href="Auditoria.jsp">
                         <span class="menu-icon">🔍</span>
                         <span>Auditoria</span>
                     </a>
@@ -877,7 +877,7 @@
                 <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item">
-                    <a href="ListaUsuarios.jsp">
+                    <a href="UsuarioSistemaControlador?accion=listarUsuarios">
                         <span class="menu-icon">👤</span>
                         <span>Lista de Usuarios</span>
                     </a>
@@ -889,13 +889,13 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="UtilidadesControlador">
+                    <a href="Utilidades.jsp">
                         <span class="menu-icon">🔧</span>
                         <span>Utilidades</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ConfiguracionControlador?accion=listar">
+                    <a href="Configuracion.jsp">
                         <span class="menu-icon">⚙️</span>
                         <span>Configuración</span>
                     </a>
@@ -912,8 +912,8 @@
                         <p>Resumen completo del sistema - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date()) %></p>
                     </div>
                     <div class="header-actions">
-                        <a href="CitaControlador?accion=formularioInsertar" class="btn btn-success">➕ Nueva Cita</a>
-                        <a href="Clientes.jsp" class="btn btn-primary">👤 Agregar Cliente</a>
+                        <a href="ProximasCitas.jsp" class="btn btn-success">➕ Nueva Cita</a>
+                        <a href="ListaClientes.jsp" class="btn btn-primary">👤 Agregar Cliente</a>
                     </div>
                 </div>
             </div>
@@ -949,13 +949,13 @@
                         <span class="action-icon">📅</span>
                         <div class="action-title">Agendar Cita</div>
                         <div class="action-description">Programar nueva cita para cliente</div>
-                        <a href="CitaControlador?accion=formularioInsertar" class="btn btn-primary btn-small">Acceder</a>
+                        <a href="ProximasCitas.jsp" class="btn btn-primary btn-small">Acceder</a>
                     </div>
                     <div class="action-card">
                         <span class="action-icon">👤</span>
                         <div class="action-title">Nuevo Cliente</div>
                         <div class="action-description">Registrar nuevo cliente en el sistema</div>
-                        <a href="Clientes.jsp" class="btn btn-success btn-small">Registrar</a>
+                        <a href="ListaClientes.jsp" class="btn btn-success btn-small">Registrar</a>
                     </div>
                     <div class="action-card">
                         <span class="action-icon">🐾</span>
@@ -967,7 +967,7 @@
                         <span class="action-icon">💳</span>
                         <div class="action-title">Registrar Pago</div>
                         <div class="action-description">Procesar pago de servicios</div>
-                        <a href="pagos.jsp" class="btn btn-warning btn-small">Pagar</a>
+                        <a href="RegistrarPago.jsp" class="btn btn-warning btn-small">Pagar</a>
                     </div>
                 </div>
 
