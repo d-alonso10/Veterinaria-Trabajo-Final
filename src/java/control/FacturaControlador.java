@@ -2,9 +2,11 @@ package control;
 
 import dao.FacturaDao;
 import dao.ClienteDao;
+import dao.ServicioDao;
 import modelo.Factura;
 import modelo.FacturaClienteDTO;
 import modelo.Cliente;
+import modelo.Servicio;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -45,14 +47,21 @@ public class FacturaControlador extends HttpServlet {
                     case "anular":
                         anularFactura(request, response);
                         break;
+                    case "listar":
                     case "listarTodas":
                         listarTodasFacturas(request, response);
                         break;
+                    case "mostrarFormulario":
+                        mostrarFormularioCreacion(request, response);
+                        break;
+                    case "mostrarBusqueda":
+                        mostrarFormularioBusqueda(request, response);
+                        break;
                     default:
-                        response.sendRedirect("UtilidadesFacturas.jsp");
+                        listarTodasFacturas(request, response);
                 }
             } else {
-                response.sendRedirect("UtilidadesFacturas.jsp");
+                listarTodasFacturas(request, response);
             }
         } catch (Exception e) {
             manejarError(request, response, e, "Error general en el controlador de facturas");
@@ -136,14 +145,9 @@ public class FacturaControlador extends HttpServlet {
             boolean exito = dao.crearFactura(factura);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Factura creada exitosamente: " + serieStr + "-" + numeroStr);
-                request.setAttribute("tipoMensaje", "success");
-                
-                // Limpiar formulario
-                request.removeAttribute("serie");
-                request.removeAttribute("numero");
-                request.removeAttribute("idAtencion");
-                request.removeAttribute("metodoPago");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/FacturaControlador?accion=listar&creada=exito&serie=" + serieStr + "&numero=" + numeroStr);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear la factura. Verifique que la serie y número no estén duplicados");
                 request.setAttribute("tipoMensaje", "error");
@@ -154,6 +158,7 @@ public class FacturaControlador extends HttpServlet {
             return;
         }
 
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher("CrearFactura.jsp").forward(request, response);
     }
 
@@ -375,6 +380,16 @@ public class FacturaControlador extends HttpServlet {
     private void listarTodasFacturas(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creada = request.getParameter("creada");
+            String serie = request.getParameter("serie");
+            String numero = request.getParameter("numero");
+            if ("exito".equals(creada)) {
+                String facturaInfo = (serie != null && numero != null) ? " (" + serie + "-" + numero + ")" : "";
+                request.setAttribute("mensaje", "✅ Factura creada exitosamente" + facturaInfo);
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             FacturaDao dao = new FacturaDao();
             List<FacturaClienteDTO> facturas = dao.listarTodasFacturas();
 
@@ -418,6 +433,40 @@ public class FacturaControlador extends HttpServlet {
         request.setAttribute("tipoMensaje", "error");
         
         request.getRequestDispatcher("UtilidadesFacturas.jsp").forward(request, response);
+    }
+
+    /**
+     * Muestra el formulario para crear una nueva factura
+     */
+    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Cargar clientes para el formulario
+            ClienteDao clienteDao = new ClienteDao();
+            List<Cliente> clientes = clienteDao.buscarClientes("");
+            request.setAttribute("clientes", clientes);
+            
+            // Cargar servicios para el formulario
+            ServicioDao servicioDao = new ServicioDao();
+            List<Servicio> servicios = servicioDao.obtenerServicios();
+            request.setAttribute("servicios", servicios);
+            
+            request.getRequestDispatcher("/CrearFactura.jsp").forward(request, response);
+        } catch (Exception e) {
+            manejarError(request, response, e, "Error al mostrar formulario de creación de factura");
+        }
+    }
+
+    /**
+     * Muestra el formulario de búsqueda de facturas
+     */
+    private void mostrarFormularioBusqueda(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            request.getRequestDispatcher("/BuscarFacturas.jsp").forward(request, response);
+        } catch (Exception e) {
+            manejarError(request, response, e, "Error al mostrar formulario de búsqueda");
+        }
     }
 
     /**

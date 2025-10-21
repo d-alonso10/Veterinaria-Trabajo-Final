@@ -1,5 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.util.List, modelo.MascotaBusquedaDTO"%>
+<%@page import="java.util.List, java.util.ArrayList, modelo.MascotaClienteDTO"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1005,13 +1005,12 @@
                     </form>
                 </div>
 
-                <!-- Cargar todas las mascotas al inicio -->
+                <!-- Cargar mascotas desde el controlador -->
                 <%
-                    // Si no hay búsqueda activa, cargar todas las mascotas
-                    List<MascotaBusquedaDTO> mascotas = (List<MascotaBusquedaDTO>) request.getAttribute("mascotas");
+                    // ✅ PATRÓN MVC CORRECTO: Solo usar datos del controlador
+                    List<MascotaClienteDTO> mascotas = (List<MascotaClienteDTO>) request.getAttribute("mascotas");
                     if (mascotas == null) {
-                        dao.MascotaDao dao = new dao.MascotaDao();
-                        mascotas = dao.buscarMascotas(""); // Cadena vacía para todas las mascotas
+                        mascotas = new java.util.ArrayList<>(); // Lista vacía si no hay datos
                     }
                 %>
 
@@ -1042,7 +1041,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <% for (MascotaBusquedaDTO mascota : mascotas) { 
+                                    <% for (MascotaClienteDTO mascota : mascotas) { 
                                         String speciesClass = "species-otro";
                                         if ("perro".equalsIgnoreCase(mascota.getEspecie())) {
                                             speciesClass = "species-perro";

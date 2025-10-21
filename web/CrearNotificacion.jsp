@@ -483,16 +483,20 @@
                             <select id="idCliente" name="idCliente" class="form-control" required>
                                 <option value="">Seleccione un cliente</option>
                                 <% 
-                                    ClienteDao clienteDao = new ClienteDao();
-                                    List<Cliente> clientes = clienteDao.listarClientes();
-                                    for (Cliente cliente : clientes) {
+                                    // ✅ PATRÓN MVC CORRECTO: Solo usar datos del controlador
+                                    List<Cliente> clientes = (List<Cliente>) request.getAttribute("clientes");
+                                    if (clientes != null) {
+                                        for (Cliente cliente : clientes) {
                                 %>
                                 <option value="<%= cliente.getIdCliente() %>" 
                                         <%= request.getParameter("idCliente") != null && 
                                            request.getParameter("idCliente").equals(String.valueOf(cliente.getIdCliente())) ? "selected" : "" %>>
                                     <%= cliente.getNombre() %> <%= cliente.getApellido() %> - <%= cliente.getTelefono() %>
                                 </option>
-                                <% } %>
+                                <% 
+                                        }
+                                    }
+                                %>
                             </select>
                         </div>
                         

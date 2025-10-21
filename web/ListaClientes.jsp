@@ -1,6 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="java.util.List, modelo.Cliente"%>
-<%@page import="dao.ClienteDao"%>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -326,6 +326,37 @@
             font-size: 0.85em;
             border-radius: 12px;
             margin: 2px;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-weight: 500;
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, #45a049 100%);
+            color: white;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #d32f2f 100%);
+            color: white;
+            border-left: 4px solid #c62828;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .search-box {
@@ -978,9 +1009,10 @@
             </div>
 
             <div class="main-content">
-                <% if (request.getAttribute("mensaje") != null) { %>
-                    <div class="mensaje <%= request.getAttribute("mensaje").toString().contains("✅") ? "exito" : "error" %>">
-                        <%= request.getAttribute("mensaje") %>
+                <!-- Mensaje de éxito/error -->
+                <% if (mensaje != null && !mensaje.isEmpty()) { %>
+                    <div class="alert <%= "exito".equals(tipoMensaje) ? "alert-success" : "alert-error" %>">
+                        <%= mensaje %>
                     </div>
                 <% } %>
 
@@ -1005,12 +1037,14 @@
                     List<Cliente> clientes = (List<Cliente>) request.getAttribute("clientes");
                     Integer totalClientes = (Integer) request.getAttribute("totalClientes");
                     
-                    // DEBUG TEMPORAL - Manteniendo tu lógica exacta
+                    // Verificar si hay mensaje de éxito
+                    String mensaje = (String) request.getAttribute("mensaje");
+                    String tipoMensaje = (String) request.getAttribute("tipoMensaje");
+                    
+                    // Los datos ahora SIEMPRE vienen del controlador - patrón MVC correcto
                     if (clientes == null) {
-                        // Cargar directamente como fallback
-                        ClienteDao dao = new ClienteDao();
-                        clientes = dao.buscarClientes("");
-                        totalClientes = clientes != null ? clientes.size() : 0;
+                        clientes = new java.util.ArrayList<Cliente>();
+                        totalClientes = 0;
                     }
 
                     // Calcular estadísticas adicionales

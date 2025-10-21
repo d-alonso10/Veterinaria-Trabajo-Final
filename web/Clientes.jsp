@@ -942,12 +942,10 @@
                     List<Cliente> clientes = (List<Cliente>) request.getAttribute("clientes");
                     Integer totalClientes = (Integer) request.getAttribute("totalClientes");
 
-                    // DEBUG TEMPORAL - Manteniendo tu lógica exacta
+                    // ✅ PATRÓN MVC CORRECTO: Solo usar datos del controlador
                     if (clientes == null) {
-                        // Cargar directamente como fallback
-                        ClienteDao dao = new ClienteDao();
-                        clientes = dao.buscarClientes("");
-                        totalClientes = clientes != null ? clientes.size() : 0;
+                        clientes = new java.util.ArrayList<>();
+                        totalClientes = 0;
                     }
 
                     // Calcular estadísticas sin usar lambdas (compatible con Java < 8)

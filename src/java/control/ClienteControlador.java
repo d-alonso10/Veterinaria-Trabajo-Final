@@ -39,8 +39,11 @@ public class ClienteControlador extends HttpServlet {
                 case "listarTodos":
                     listarTodosClientes(request, response);
                     break;
+                case "mostrarBusqueda":
+                    mostrarFormularioBusqueda(request, response);
+                    break;
                 default:
-                    response.sendRedirect("menuClientes.jsp");
+                    response.sendRedirect("InsertarCliente.jsp");
             }
         } else {
             response.sendRedirect("InsertarCliente.jsp");
@@ -78,7 +81,9 @@ public class ClienteControlador extends HttpServlet {
             boolean exito = cd.insertarCliente(cliente);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Cliente insertado con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/ClienteControlador?accion=listarTodos&creado=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al insertar cliente. Posible DNI/RUC duplicado.");
             }
@@ -87,6 +92,7 @@ public class ClienteControlador extends HttpServlet {
             request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
         }
 
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher("InsertarCliente.jsp").forward(request, response);
     }
 
@@ -136,6 +142,13 @@ public class ClienteControlador extends HttpServlet {
     private void listarTodosClientes(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creado = request.getParameter("creado");
+            if ("exito".equals(creado)) {
+                request.setAttribute("mensaje", "✅ Cliente creado exitosamente");
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             System.out.println("=== CARGANDO CLIENTES DESDE SERVLET ===");
 
             ClienteDao dao = new ClienteDao();
@@ -161,6 +174,13 @@ public class ClienteControlador extends HttpServlet {
 
         // Asegúrate de que esto diga EXACTAMENTE "ListaClientes.jsp"
         request.getRequestDispatcher("ListaClientes.jsp").forward(request, response);
+    }
+
+    // NUEVO MÉTODO: Mostrar formulario de búsqueda
+    private void mostrarFormularioBusqueda(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Solo mostrar el formulario, sin datos iniciales
+        request.getRequestDispatcher("BuscarClientes.jsp").forward(request, response);
     }
 
     // Método auxiliar para limpiar parámetros (ya existente)

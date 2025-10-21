@@ -131,16 +131,20 @@ public class GroomerControlador extends HttpServlet {
             int idGenerado = dao.insertarGroomer(groomer);
 
             if (idGenerado > 0) {
-                request.setAttribute("mensaje", "✅ Groomer insertado con éxito (ID: " + idGenerado + ")");
+                // ✅ PRG PATTERN: Redirigir después de POST exitoso
+                response.sendRedirect(request.getContextPath() + "/GroomerControlador?accion=listar&creado=exito&id=" + idGenerado);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al insertar groomer");
+                request.getRequestDispatcher("/InsertarGroomer.jsp").forward(request, response);
+                return;
             }
 
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
+            request.getRequestDispatcher("/InsertarGroomer.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("InsertarGroomer.jsp").forward(request, response);
     }
 
     private void actualizarGroomer(HttpServletRequest request, HttpServletResponse response)
@@ -213,6 +217,15 @@ public class GroomerControlador extends HttpServlet {
     private void listarGroomers(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creado = request.getParameter("creado");
+            String id = request.getParameter("id");
+            if ("exito".equals(creado)) {
+                String groomerInfo = (id != null) ? " (ID: " + id + ")" : "";
+                request.setAttribute("mensaje", "✅ Groomer creado exitosamente" + groomerInfo);
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             System.out.println("=== OBTENIENDO TODOS LOS GROOMERS ===");
 
             GroomerDao dao = new GroomerDao();

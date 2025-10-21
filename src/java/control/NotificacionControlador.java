@@ -49,6 +49,9 @@ public class NotificacionControlador extends HttpServlet {
                     case "listarTodasRecientes":
                         listarTodasNotificacionesRecientes(request, response);
                         break;
+                    case "mostrarFormulario":
+                        mostrarFormularioCreacion(request, response);
+                        break;
                     default:
                         response.sendRedirect("UtilidadesNotificaciones.jsp");
                 }
@@ -165,27 +168,20 @@ public class NotificacionControlador extends HttpServlet {
             boolean exito = dao.registrarNotificacion(notificacion);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Notificación registrada exitosamente");
-                request.setAttribute("tipoMensaje", "success");
-                
-                // Limpiar formulario
-                request.removeAttribute("tipo");
-                request.removeAttribute("destinatarioId");
-                request.removeAttribute("canal");
-                request.removeAttribute("contenido");
-                request.removeAttribute("referenciaTipo");
-                request.removeAttribute("referenciaId");
+                // ✅ PRG PATTERN: Redirigir después de POST exitoso
+                response.sendRedirect(request.getContextPath() + "/NotificacionControlador?accion=mostrarFormulario&registrada=exito&tipo=" + tipo);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al registrar la notificación");
                 request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("/CrearNotificacion.jsp").forward(request, response);
+                return;
             }
 
         } catch (Exception e) {
             manejarError(request, response, e, "Error al registrar notificación");
             return;
         }
-
-        request.getRequestDispatcher("RegistrarNotificacion.jsp").forward(request, response);
     }
 
     /**
@@ -473,6 +469,32 @@ public class NotificacionControlador extends HttpServlet {
         request.setAttribute("tipoMensaje", "error");
         
         request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
+    }
+
+    /**
+     * Muestra el formulario para crear una nueva notificación
+     */
+    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Verificar si viene de un registro exitoso
+            String registrada = request.getParameter("registrada");
+            String tipo = request.getParameter("tipo");
+            if ("exito".equals(registrada)) {
+                String tipoInfo = (tipo != null) ? " de tipo " + tipo : "";
+                request.setAttribute("mensaje", "✅ Notificación" + tipoInfo + " registrada exitosamente");
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
+            // Cargar clientes para el formulario
+            ClienteDao clienteDao = new ClienteDao();
+            List<Cliente> clientes = clienteDao.buscarClientes("");
+            request.setAttribute("clientes", clientes);
+            
+            request.getRequestDispatcher("/CrearNotificacion.jsp").forward(request, response);
+        } catch (Exception e) {
+            manejarError(request, response, e, "Error al mostrar formulario de creación de notificación");
+        }
     }
 
     /**

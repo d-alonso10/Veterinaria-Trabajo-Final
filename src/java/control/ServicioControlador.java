@@ -141,16 +141,20 @@ public class ServicioControlador extends HttpServlet {
             int idServicio = dao.insertarServicio(servicio);
 
             if (idServicio != -1) {
-                request.setAttribute("mensaje", "✅ Servicio insertado con éxito (ID: " + idServicio + ")");
+                // ✅ PRG PATTERN: Redirigir después de POST exitoso
+                response.sendRedirect(request.getContextPath() + "/ServicioControlador?accion=listar&creado=exito&id=" + idServicio);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al insertar servicio");
+                request.getRequestDispatcher("/InsertarServicio.jsp").forward(request, response);
+                return;
             }
 
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
+            request.getRequestDispatcher("/InsertarServicio.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("InsertarServicio.jsp").forward(request, response);
     }
 
  // MÉTODO: Actualizar servicio - MEJORADO
@@ -265,6 +269,15 @@ private void actualizarServicio(HttpServletRequest request, HttpServletResponse 
     private void listarServicios(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una operación exitosa
+            String creado = request.getParameter("creado");
+            String id = request.getParameter("id");
+            if ("exito".equals(creado)) {
+                String servicioInfo = (id != null) ? " (ID: " + id + ")" : "";
+                request.setAttribute("mensaje", "✅ Servicio creado exitosamente" + servicioInfo);
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             System.out.println("=== OBTENIENDO TODOS LOS SERVICIOS ===");
 
             ServicioDao dao = new ServicioDao();

@@ -544,9 +544,10 @@
                         <h4>Servicios Disponibles (Haga clic para agregar):</h4>
                         <div class="available-services">
                             <% 
-                                ServicioDao servicioDao = new ServicioDao();
-                                List<Servicio> servicios = servicioDao.listarServicios();
-                                for (Servicio servicio : servicios) {
+                                // ✅ PATRÓN MVC CORRECTO: Solo usar datos del controlador
+                                List<Servicio> servicios = (List<Servicio>) request.getAttribute("servicios");
+                                if (servicios != null) {
+                                    for (Servicio servicio : servicios) {
                             %>
                             <div class="service-card" data-id="<%= servicio.getIdServicio() %>" 
                                  data-name="<%= servicio.getNombre() %>" 
@@ -557,7 +558,10 @@
                                 <p><%= servicio.getDescripcion() != null ? servicio.getDescripcion() : "Sin descripción" %></p>
                                 <div class="price">$<%= String.format("%.2f", servicio.getPrecio()) %></div>
                             </div>
-                            <% } %>
+                            <% 
+                                    }
+                                }
+                            %>
                         </div>
                         
                         <h4>Servicios Seleccionados:</h4>

@@ -473,9 +473,10 @@
                             <select id="idFactura" name="idFactura" class="form-control" required onchange="mostrarInfoFactura()">
                                 <option value="">Seleccione una factura pendiente</option>
                                 <% 
-                                    FacturaDao facturaDao = new FacturaDao();
-                                    List<FacturaClienteDTO> facturasPendientes = facturaDao.listarFacturasPendientes();
-                                    for (FacturaClienteDTO factura : facturasPendientes) {
+                                    // ✅ PATRÓN MVC CORRECTO: Solo usar datos del controlador
+                                    List<FacturaClienteDTO> facturasPendientes = (List<FacturaClienteDTO>) request.getAttribute("facturasPendientes");
+                                    if (facturasPendientes != null) {
+                                        for (FacturaClienteDTO factura : facturasPendientes) {
                                 %>
                                 <option value="<%= factura.getIdFactura() %>" 
                                         data-serie="<%= factura.getSerie() %>"
@@ -493,7 +494,10 @@
                                     <%= factura.getNombreCliente() %> <%= factura.getApellidoCliente() %> - 
                                     $<%= String.format("%.2f", factura.getTotal()) %>
                                 </option>
-                                <% } %>
+                                <% 
+                                        }
+                                    }
+                                %>
                             </select>
                         </div>
                     </div>

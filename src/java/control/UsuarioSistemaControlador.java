@@ -58,6 +58,12 @@ public class UsuarioSistemaControlador extends HttpServlet {
                     case "obtenerPerfil":
                         obtenerPerfilUsuario(request, response);
                         break;
+                    case "listar":
+                        listarUsuarios(request, response);
+                        break;
+                    case "mostrarFormulario":
+                        mostrarFormularioCreacion(request, response);
+                        break;
                     default:
                         response.sendRedirect("Login.jsp");
                 }
@@ -275,13 +281,9 @@ public class UsuarioSistemaControlador extends HttpServlet {
             int idUsuarioCreado = dao.registrarUsuarioSistema(usuario);
 
             if (idUsuarioCreado > 0) {
-                request.setAttribute("mensaje", "✅ Usuario registrado exitosamente con ID: " + idUsuarioCreado);
-                request.setAttribute("tipoMensaje", "success");
-                
-                // Limpiar formulario
-                request.removeAttribute("nombre");
-                request.removeAttribute("email");
-                request.removeAttribute("rol");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=listar&creado=exito&id=" + idUsuarioCreado);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al registrar usuario. Posiblemente el email ya existe");
                 request.setAttribute("tipoMensaje", "error");
@@ -292,7 +294,8 @@ public class UsuarioSistemaControlador extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
+        request.getRequestDispatcher("CrearUsuario.jsp").forward(request, response);
     }
 
     /**
@@ -301,6 +304,14 @@ public class UsuarioSistemaControlador extends HttpServlet {
     private void listarUsuarios(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creado = request.getParameter("creado");
+            String idCreado = request.getParameter("id");
+            if ("exito".equals(creado)) {
+                request.setAttribute("mensaje", "✅ Usuario creado exitosamente" + (idCreado != null ? " con ID: " + idCreado : ""));
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             // Verificar permisos
             HttpSession session = request.getSession(false);
             if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
@@ -731,6 +742,23 @@ public class UsuarioSistemaControlador extends HttpServlet {
         request.setAttribute("tipoMensaje", "error");
         
         request.getRequestDispatcher("Login.jsp").forward(request, response);
+    }
+
+    /**
+     * Muestra el formulario de creación de usuarios
+     */
+    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Verificar permisos
+        HttpSession session = request.getSession(false);
+        if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
+            request.setAttribute("mensaje", "❌ No tiene permisos para crear usuarios");
+            response.sendRedirect("Menu.jsp");
+            return;
+        }
+        
+        // Solo mostrar el formulario limpio
+        request.getRequestDispatcher("CrearUsuario.jsp").forward(request, response);
     }
 
     /**

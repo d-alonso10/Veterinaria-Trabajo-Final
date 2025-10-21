@@ -52,11 +52,17 @@ public class PaqueteServicioControlador extends HttpServlet {
                     case "buscarPaquetes":
                         buscarPaquetesServicio(request, response);
                         break;
+                    case "listar":
+                        listarPaquetesServicio(request, response);
+                        break;
+                    case "mostrarFormulario":
+                        mostrarFormularioCreacion(request, response);
+                        break;
                     default:
-                        response.sendRedirect("ListaPaquetesServicios.jsp");
+                        listarPaquetesServicio(request, response);
                 }
             } else {
-                response.sendRedirect("ListaPaquetesServicios.jsp");
+                listarPaquetesServicio(request, response);
             }
         } catch (Exception e) {
             manejarError(request, response, e, "Error general en el controlador de paquetes de servicios");
@@ -125,14 +131,9 @@ public class PaqueteServicioControlador extends HttpServlet {
             int idPaqueteCreado = dao.crearPaqueteServicio(paquete);
 
             if (idPaqueteCreado > 0) {
-                request.setAttribute("mensaje", "✅ Paquete de servicios creado exitosamente con ID: " + idPaqueteCreado);
-                request.setAttribute("tipoMensaje", "success");
-                request.setAttribute("idPaqueteCreado", idPaqueteCreado);
-                
-                // Limpiar formulario
-                request.removeAttribute("nombre");
-                request.removeAttribute("descripcion");
-                request.removeAttribute("precioTotal");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=listar&creado=exito&id=" + idPaqueteCreado);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear el paquete de servicios");
                 request.setAttribute("tipoMensaje", "error");
@@ -143,6 +144,7 @@ public class PaqueteServicioControlador extends HttpServlet {
             return;
         }
 
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
     }
 
@@ -248,6 +250,14 @@ public class PaqueteServicioControlador extends HttpServlet {
     private void listarPaquetesServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creado = request.getParameter("creado");
+            String idCreado = request.getParameter("id");
+            if ("exito".equals(creado)) {
+                request.setAttribute("mensaje", "✅ Paquete de servicios creado exitosamente" + (idCreado != null ? " con ID: " + idCreado : ""));
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             PaqueteServicioDao dao = new PaqueteServicioDao();
             List<PaqueteServicio> paquetes = dao.listarPaquetesServicio();
 
@@ -576,6 +586,24 @@ public class PaqueteServicioControlador extends HttpServlet {
         request.setAttribute("tipoMensaje", "error");
         
         request.getRequestDispatcher("ListaPaquetesServicios.jsp").forward(request, response);
+    }
+
+    /**
+     * Muestra el formulario de creación de paquetes de servicios
+     */
+    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Cargar lista de servicios disponibles para el formulario
+            ServicioDao servicioDao = new ServicioDao();
+            List<Servicio> serviciosDisponibles = servicioDao.obtenerServicios();
+            request.setAttribute("serviciosDisponibles", serviciosDisponibles);
+        } catch (Exception e) {
+            System.err.println("Error al cargar servicios para formulario: " + e.getMessage());
+        }
+        
+        // Mostrar el formulario
+        request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
     }
 
     /**
