@@ -254,7 +254,9 @@ public class UsuarioSistemaDao {
         }
     }
 
-    // MÉTODO: Cambiar estado de usuario
+    // MÉTODO ELIMINADO: Cambiar estado de usuario
+    // MOTIVO: La tabla usuario_sistema no tiene campo 'estado' según el esquema de BD
+    /*
     public boolean cambiarEstadoUsuario(int idUsuario, String nuevoEstado) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -278,9 +280,10 @@ public class UsuarioSistemaDao {
             closeResources(con, pstmt, null);
         }
     }
+    */
 
-    // MÉTODO: Buscar usuarios por criterios
-    public List<UsuarioSistema> buscarUsuarios(String termino, String rol, String estado) {
+    // MÉTODO: Buscar usuarios por criterios (campo 'estado' eliminado - no existe en BD)
+    public List<UsuarioSistema> buscarUsuarios(String termino, String rol) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -306,10 +309,7 @@ public class UsuarioSistemaDao {
                 parametros.add(rol);
             }
             
-            if (estado != null && !estado.trim().isEmpty()) {
-                sql.append(" AND estado = ?");
-                parametros.add(estado);
-            }
+            // Campo 'estado' eliminado - no existe en la tabla usuario_sistema
             
             sql.append(" ORDER BY nombre");
             

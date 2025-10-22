@@ -11,6 +11,10 @@ public class NotificacionClienteDTO {
     private String estado;
     private String referenciaTipo;
     private int referenciaId;
+    
+    // Campos del cliente (JOIN)
+    private String nombreCliente;
+    private String apellidoCliente;
 
     // Getters y Setters
     public int getIdNotificacion() { return idNotificacion; }
@@ -29,4 +33,19 @@ public class NotificacionClienteDTO {
     public void setReferenciaTipo(String referenciaTipo) { this.referenciaTipo = referenciaTipo; }
     public int getReferenciaId() { return referenciaId; }
     public void setReferenciaId(int referenciaId) { this.referenciaId = referenciaId; }
+    
+    public String getNombreCliente() { return nombreCliente; }
+    public void setNombreCliente(String nombreCliente) { this.nombreCliente = nombreCliente; }
+    public String getApellidoCliente() { return apellidoCliente; }
+    public void setApellidoCliente(String apellidoCliente) { this.apellidoCliente = apellidoCliente; }
+    
+    // Método auxiliar para obtener nombre completo del cliente
+    public String getNombreCompletoCliente() {
+        if (nombreCliente != null && apellidoCliente != null) {
+            return nombreCliente + " " + apellidoCliente;
+        } else if (nombreCliente != null) {
+            return nombreCliente;
+        }
+        return "Sistema";  // Para notificaciones del sistema
+    }
 }

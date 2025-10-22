@@ -337,19 +337,28 @@ public class NotificacionDao {
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(url, user, pass);
 
-            String sql = "SELECT * FROM notificacion WHERE estado = 'pendiente' ORDER BY enviado_at ASC";
+            String sql = "SELECT n.*, c.nombre, c.apellido " +
+                        "FROM notificacion n " +
+                        "LEFT JOIN cliente c ON n.destinatario_id = c.id_cliente " +
+                        "WHERE n.estado = 'pendiente' ORDER BY n.fecha_creacion DESC";
             
             pstmt = conn.prepareStatement(sql);
             rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setIdNotificacion(rs.getInt("id_notificacion"));
                 notificacion.setTipo(rs.getString("tipo"));
                 notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
                 notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
                 notificacion.setEstado(rs.getString("estado"));
                 notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
                 notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                // Mapear datos del cliente del JOIN (pueden ser null para notificaciones del sistema)
+                notificacion.setNombreCliente(rs.getString("nombre"));
+                notificacion.setApellidoCliente(rs.getString("apellido"));
                 
                 notificaciones.add(notificacion);
             }

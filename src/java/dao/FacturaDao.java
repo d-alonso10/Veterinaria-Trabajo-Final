@@ -4,6 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import modelo.Factura;
+import modelo.FacturaClienteDTO;
 
 public class FacturaDao {
     
@@ -179,8 +180,8 @@ public class FacturaDao {
     }
 
     // MÉTODO: Buscar facturas por término
-    public List<Factura> buscarFacturas(String termino) {
-        List<Factura> facturas = new ArrayList<>();
+    public List<FacturaClienteDTO> buscarFacturas(String termino) {
+        List<FacturaClienteDTO> facturas = new ArrayList<>();
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -207,21 +208,25 @@ public class FacturaDao {
             rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Factura factura = new Factura();
-                factura.setIdFactura(rs.getInt("id_factura"));
-                factura.setSerie(rs.getString("serie"));
-                factura.setNumero(rs.getString("numero"));
-                factura.setIdCliente(rs.getInt("id_cliente"));
-                factura.setIdAtencion(rs.getInt("id_atencion"));
-                factura.setFechaEmision(rs.getTimestamp("fecha_emision"));
-                factura.setSubtotal(rs.getDouble("subtotal"));
-                factura.setImpuesto(rs.getDouble("impuesto"));
-                factura.setDescuentoTotal(rs.getDouble("descuento_total"));
-                factura.setTotal(rs.getDouble("total"));
-                factura.setEstado(rs.getString("estado"));
-                factura.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
+                FacturaClienteDTO dto = new FacturaClienteDTO();
+                dto.setIdFactura(rs.getInt("id_factura"));
+                dto.setSerie(rs.getString("serie"));
+                dto.setNumero(rs.getString("numero"));
+                dto.setIdCliente(rs.getInt("id_cliente"));
+                dto.setIdAtencion(rs.getInt("id_atencion"));
+                dto.setFechaEmision(rs.getTimestamp("fecha_emision"));
+                dto.setSubtotal(rs.getDouble("subtotal"));
+                dto.setImpuesto(rs.getDouble("impuesto"));
+                dto.setDescuentoTotal(rs.getDouble("descuento_total"));
+                dto.setTotal(rs.getDouble("total"));
+                dto.setEstado(rs.getString("estado"));
+                dto.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
                 
-                facturas.add(factura);
+                // Mapear datos del cliente del JOIN
+                dto.setNombreCliente(rs.getString("nombre"));
+                dto.setApellidoCliente(rs.getString("apellido"));
+                
+                facturas.add(dto);
             }
 
         } catch (Exception e) {
