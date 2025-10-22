@@ -124,29 +124,254 @@ public class FacturaDao {
         return exito;
     }
 
-    // Método main para probar solo el último método agregado
-    public static void main(String[] args) {
-        FacturaDao facturaDAO = new FacturaDao();
-
-        System.out.println("=== Probando sp_AnularFactura ===");
-        
-        // Anular factura (suponiendo que existe una factura con ID 1)
-        int idFactura = 1;
-        
-        boolean anulada = facturaDAO.anularFactura(idFactura);
-        
-        if (anulada) {
-            System.out.println("✅ Factura anulada correctamente usando sp_AnularFactura");
-            System.out.println("ID Factura: " + idFactura);
-            System.out.println("\n⚠️  El procedimiento automáticamente:");
-            System.out.println("- Cambia el estado de la factura a 'anulada'");
-            System.out.println("- Cambia el estado de los pagos asociados a 'fallido'");
-        } else {
-            System.out.println("❌ Error al anular la factura");
-            System.out.println("Posibles causas:");
-            System.out.println("- La factura no existe");
-            System.out.println("- ID de factura incorrecto");
-            System.out.println("- La factura ya estaba anulada");
+    // MÉTODO: Anular factura con motivo
+    public boolean anularFactura(int idFactura, String motivo) {
+        boolean exito = false;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_AnularFacturaConMotivo(?, ?)}");
+            
+            cstmt.setInt(1, idFactura);
+            cstmt.setString(2, motivo);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return exito;
+    }
+
+    // MÉTODO: Buscar facturas por término
+    public List<Factura> buscarFacturas(String termino) {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_BuscarFacturas(?)}");
+            cstmt.setString(1, termino);
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Factura factura = new Factura();
+                factura.setIdFactura(rs.getInt("id_factura"));
+                factura.setSerie(rs.getString("serie"));
+                factura.setNumero(rs.getString("numero"));
+                factura.setIdCliente(rs.getInt("id_cliente"));
+                factura.setIdAtencion(rs.getInt("id_atencion"));
+                factura.setFechaEmision(rs.getTimestamp("fecha_emision"));
+                factura.setSubtotal(rs.getDouble("subtotal"));
+                factura.setImpuesto(rs.getDouble("impuesto"));
+                factura.setDescuentoTotal(rs.getDouble("descuento_total"));
+                factura.setTotal(rs.getDouble("total"));
+                factura.setEstado(rs.getString("estado"));
+                factura.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
+                
+                facturas.add(factura);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return facturas;
+    }
+
+    // MÉTODO: Obtener facturas por rango de fechas
+    public List<Factura> obtenerFacturasPorFecha(java.sql.Date fechaInicio, java.sql.Date fechaFin) {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerFacturasPorFecha(?, ?)}");
+            cstmt.setDate(1, fechaInicio);
+            cstmt.setDate(2, fechaFin);
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Factura factura = new Factura();
+                factura.setIdFactura(rs.getInt("id_factura"));
+                factura.setSerie(rs.getString("serie"));
+                factura.setNumero(rs.getString("numero"));
+                factura.setIdCliente(rs.getInt("id_cliente"));
+                factura.setIdAtencion(rs.getInt("id_atencion"));
+                factura.setFechaEmision(rs.getTimestamp("fecha_emision"));
+                factura.setSubtotal(rs.getDouble("subtotal"));
+                factura.setImpuesto(rs.getDouble("impuesto"));
+                factura.setDescuentoTotal(rs.getDouble("descuento_total"));
+                factura.setTotal(rs.getDouble("total"));
+                factura.setEstado(rs.getString("estado"));
+                factura.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
+                
+                facturas.add(factura);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return facturas;
+    }
+
+    // MÉTODO: Obtener facturas por estado
+    public List<Factura> obtenerFacturasPorEstado(String estado) {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerFacturasPorEstado(?)}");
+            cstmt.setString(1, estado);
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Factura factura = new Factura();
+                factura.setIdFactura(rs.getInt("id_factura"));
+                factura.setSerie(rs.getString("serie"));
+                factura.setNumero(rs.getString("numero"));
+                factura.setIdCliente(rs.getInt("id_cliente"));
+                factura.setIdAtencion(rs.getInt("id_atencion"));
+                factura.setFechaEmision(rs.getTimestamp("fecha_emision"));
+                factura.setSubtotal(rs.getDouble("subtotal"));
+                factura.setImpuesto(rs.getDouble("impuesto"));
+                factura.setDescuentoTotal(rs.getDouble("descuento_total"));
+                factura.setTotal(rs.getDouble("total"));
+                factura.setEstado(rs.getString("estado"));
+                factura.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
+                
+                facturas.add(factura);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return facturas;
+    }
+
+    // MÉTODO: Listar todas las facturas
+    public List<Factura> listarTodasFacturas() {
+        List<Factura> facturas = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ListarTodasFacturas()}");
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Factura factura = new Factura();
+                factura.setIdFactura(rs.getInt("id_factura"));
+                factura.setSerie(rs.getString("serie"));
+                factura.setNumero(rs.getString("numero"));
+                factura.setIdCliente(rs.getInt("id_cliente"));
+                factura.setIdAtencion(rs.getInt("id_atencion"));
+                factura.setFechaEmision(rs.getTimestamp("fecha_emision"));
+                factura.setSubtotal(rs.getDouble("subtotal"));
+                factura.setImpuesto(rs.getDouble("impuesto"));
+                factura.setDescuentoTotal(rs.getDouble("descuento_total"));
+                factura.setTotal(rs.getDouble("total"));
+                factura.setEstado(rs.getString("estado"));
+                factura.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
+                
+                facturas.add(factura);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return facturas;
+    }
+
+    // MÉTODO: Obtener factura por ID
+    public Factura obtenerFacturaPorId(int idFactura) {
+        Factura factura = null;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerFacturaPorId(?)}");
+            cstmt.setInt(1, idFactura);
+            
+            rs = cstmt.executeQuery();
+
+            if (rs.next()) {
+                factura = new Factura();
+                factura.setIdFactura(rs.getInt("id_factura"));
+                factura.setSerie(rs.getString("serie"));
+                factura.setNumero(rs.getString("numero"));
+                factura.setIdCliente(rs.getInt("id_cliente"));
+                factura.setIdAtencion(rs.getInt("id_atencion"));
+                factura.setFechaEmision(rs.getTimestamp("fecha_emision"));
+                factura.setSubtotal(rs.getDouble("subtotal"));
+                factura.setImpuesto(rs.getDouble("impuesto"));
+                factura.setDescuentoTotal(rs.getDouble("descuento_total"));
+                factura.setTotal(rs.getDouble("total"));
+                factura.setEstado(rs.getString("estado"));
+                factura.setMetodoPagoSugerido(rs.getString("metodo_pago_sugerido"));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return factura;
     }
 }

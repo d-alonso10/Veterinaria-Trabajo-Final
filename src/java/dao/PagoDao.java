@@ -164,4 +164,231 @@ public class PagoDao {
             }
         }
     }
+
+    // MÉTODO: Obtener total pagado de una factura
+    public double obtenerTotalPagadoFactura(int idFactura) {
+        double totalPagado = 0.0;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerTotalPagadoFactura(?)}");
+            cstmt.setInt(1, idFactura);
+            
+            rs = cstmt.executeQuery();
+
+            if (rs.next()) {
+                totalPagado = rs.getDouble("total_pagado");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return totalPagado;
+    }
+
+    // MÉTODO: Buscar pagos con filtros
+    public List<Pago> buscarPagos(String metodo, String estado, String referencia, Double montoMin, Double montoMax) {
+        List<Pago> pagos = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_BuscarPagos(?, ?, ?, ?, ?)}");
+            
+            cstmt.setString(1, metodo);
+            cstmt.setString(2, estado);
+            cstmt.setString(3, referencia);
+            
+            if (montoMin != null) {
+                cstmt.setDouble(4, montoMin);
+            } else {
+                cstmt.setNull(4, Types.DOUBLE);
+            }
+            
+            if (montoMax != null) {
+                cstmt.setDouble(5, montoMax);
+            } else {
+                cstmt.setNull(5, Types.DOUBLE);
+            }
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Pago pago = new Pago();
+                pago.setIdPago(rs.getInt("id_pago"));
+                pago.setIdFactura(rs.getInt("id_factura"));
+                pago.setFechaPago(rs.getTimestamp("fecha_pago"));
+                pago.setMonto(rs.getDouble("monto"));
+                pago.setMetodo(rs.getString("metodo"));
+                pago.setReferencia(rs.getString("referencia"));
+                pago.setEstado(rs.getString("estado"));
+                
+                pagos.add(pago);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return pagos;
+    }
+
+    // MÉTODO: Anular un pago
+    public boolean anularPago(int idPago, String motivo) {
+        boolean exito = false;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_AnularPago(?, ?)}");
+            cstmt.setInt(1, idPago);
+            cstmt.setString(2, motivo);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Confirmar un pago
+    public boolean confirmarPago(int idPago) {
+        boolean exito = false;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ConfirmarPago(?)}");
+            cstmt.setInt(1, idPago);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Obtener pagos por rango de fechas (necesita un DTO adicional)
+    public List<Pago> obtenerPagosPorFecha(java.sql.Date fechaInicio, java.sql.Date fechaFin) {
+        List<Pago> pagos = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerPagosPorFecha(?, ?)}");
+            cstmt.setDate(1, fechaInicio);
+            cstmt.setDate(2, fechaFin);
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Pago pago = new Pago();
+                pago.setIdPago(rs.getInt("id_pago"));
+                pago.setIdFactura(rs.getInt("id_factura"));
+                pago.setFechaPago(rs.getTimestamp("fecha_pago"));
+                pago.setMonto(rs.getDouble("monto"));
+                pago.setMetodo(rs.getString("metodo"));
+                pago.setReferencia(rs.getString("referencia"));
+                pago.setEstado(rs.getString("estado"));
+                
+                pagos.add(pago);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return pagos;
+    }
+
+    // MÉTODO: Listar todos los pagos con límite
+    public List<Pago> listarTodosPagos(Integer limite) {
+        List<Pago> pagos = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ListarTodosPagos(?)}");
+            
+            if (limite != null) {
+                cstmt.setInt(1, limite);
+            } else {
+                cstmt.setNull(1, Types.INTEGER);
+            }
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                Pago pago = new Pago();
+                pago.setIdPago(rs.getInt("id_pago"));
+                pago.setIdFactura(rs.getInt("id_factura"));
+                pago.setFechaPago(rs.getTimestamp("fecha_pago"));
+                pago.setMonto(rs.getDouble("monto"));
+                pago.setMetodo(rs.getString("metodo"));
+                pago.setReferencia(rs.getString("referencia"));
+                pago.setEstado(rs.getString("estado"));
+                
+                pagos.add(pago);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return pagos;
+    }
 }

@@ -198,4 +198,183 @@ public class NotificacionDao {
         List<NotificacionClienteDTO> notificacionesLimitadas = notificacionDAO.obtenerNotificacionesCliente(destinatarioId, 5);
         System.out.println("Notificaciones obtenidas: " + notificacionesLimitadas.size());
     }
+
+    // MÉTODO: Marcar notificación como leída
+    public boolean marcarNotificacionLeida(int idNotificacion) {
+        boolean exito = false;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_MarcarNotificacionLeida(?)}");
+            cstmt.setInt(1, idNotificacion);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Marcar notificación como enviada
+    public boolean marcarNotificacionEnviada(int idNotificacion) {
+        boolean exito = false;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_MarcarNotificacionEnviada(?)}");
+            cstmt.setInt(1, idNotificacion);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Buscar notificaciones con filtros
+    public List<NotificacionClienteDTO> buscarNotificaciones(String tipo, String canal, String estado, String contenido) {
+        List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_BuscarNotificaciones(?, ?, ?, ?)}");
+            
+            cstmt.setString(1, tipo);
+            cstmt.setString(2, canal);
+            cstmt.setString(3, estado);
+            cstmt.setString(4, contenido);
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setTipo(rs.getString("tipo"));
+                notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
+                notificacion.setEstado(rs.getString("estado"));
+                notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
+                notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                notificaciones.add(notificacion);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return notificaciones;
+    }
+
+    // MÉTODO: Obtener notificaciones pendientes
+    public List<NotificacionClienteDTO> obtenerNotificacionesPendientes() {
+        List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerNotificacionesPendientes()}");
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setTipo(rs.getString("tipo"));
+                notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
+                notificacion.setEstado(rs.getString("estado"));
+                notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
+                notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                notificaciones.add(notificacion);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return notificaciones;
+    }
+
+    // MÉTODO: Obtener notificaciones recientes
+    public List<NotificacionClienteDTO> obtenerNotificacionesRecientes(Integer limite) {
+        List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ObtenerNotificacionesRecientes(?)}");
+            
+            if (limite != null) {
+                cstmt.setInt(1, limite);
+            } else {
+                cstmt.setNull(1, Types.INTEGER);
+            }
+            
+            rs = cstmt.executeQuery();
+
+            while (rs.next()) {
+                NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setTipo(rs.getString("tipo"));
+                notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
+                notificacion.setEstado(rs.getString("estado"));
+                notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
+                notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                notificaciones.add(notificacion);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return notificaciones;
+    }
 }
