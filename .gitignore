@@ -9,6 +9,7 @@
 # Apache Tomcat descargado para pruebas locales
 apache-tomcat-*/
 tomcat.zip
+iniciar_tomcat.bat
 
 # Lista de archivos Java generada automáticamente
 java-files.txt
@@ -125,6 +126,14 @@ target/
 # Coverage reports
 coverage/
 *.coverage
+
+# Carpetas y archivos de pruebas
+tests/
+pruebas/
+test-results/
+*.test.log
+screenshots-tests/
+test-data/
 
 # ==========================================
 # DOCUMENTACIÓN TEMPORAL

@@ -283,21 +283,24 @@ public class NotificacionControlador extends HttpServlet {
             boolean exito = dao.marcarNotificacionLeida(idNotificacion);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Notificación marcada como leída");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/NotificacionControlador?accion=listarTodasRecientes&marcada=leida&id=" + idNotificacion);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al marcar notificación como leída");
                 request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de notificación inválido");
+            request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al marcar notificación como leída");
             return;
         }
-
-        request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
     }
 
     /**
@@ -320,21 +323,24 @@ public class NotificacionControlador extends HttpServlet {
             boolean exito = dao.marcarNotificacionEnviada(idNotificacion);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Notificación marcada como enviada");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/NotificacionControlador?accion=listarPendientes&marcada=enviada&id=" + idNotificacion);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al marcar notificación como enviada");
                 request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de notificación inválido");
+            request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al marcar notificación como enviada");
             return;
         }
-
-        request.getRequestDispatcher("UtilidadesNotificaciones.jsp").forward(request, response);
     }
 
     /**

@@ -416,21 +416,24 @@ public class PaqueteServicioControlador extends HttpServlet {
             boolean exito = dao.actualizarPaqueteServicio(idPaquete, nombre, descripcion, precioTotal, estado);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Paquete actualizado exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=listar&actualizado=exito&id=" + idPaquete);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar el paquete");
                 request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Datos numéricos inválidos");
+            request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al actualizar paquete de servicios");
             return;
         }
-
-        request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
     }
 
     /**
@@ -453,22 +456,24 @@ public class PaqueteServicioControlador extends HttpServlet {
             boolean exito = dao.eliminarPaqueteServicio(idPaquete);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Paquete eliminado exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=listar&eliminado=exito&id=" + idPaquete);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al eliminar el paquete");
                 request.setAttribute("tipoMensaje", "error");
+                listarPaquetesServicio(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de paquete inválido");
+            listarPaquetesServicio(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al eliminar paquete de servicios");
             return;
         }
-
-        // Redirigir a la lista actualizada
-        listarPaquetesServicio(request, response);
     }
 
     /**

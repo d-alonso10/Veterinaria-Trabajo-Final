@@ -430,8 +430,9 @@ public class UsuarioSistemaControlador extends HttpServlet {
             boolean exito = dao.cambiarPassword(usuarioLogueado.getIdUsuario(), passwordNuevoHash);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Contraseña cambiada exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=mostrarPerfil&passwordCambiada=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al cambiar la contraseña");
                 request.setAttribute("tipoMensaje", "error");
@@ -442,6 +443,7 @@ public class UsuarioSistemaControlador extends HttpServlet {
             return;
         }
 
+        // Solo usar forward en caso de error
         request.getRequestDispatcher("CambiarPassword.jsp").forward(request, response);
     }
 
@@ -491,8 +493,9 @@ public class UsuarioSistemaControlador extends HttpServlet {
                 session.setAttribute("nombreUsuario", nombre);
                 session.setAttribute("emailUsuario", email);
 
-                request.setAttribute("mensaje", "✅ Perfil actualizado exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=mostrarPerfil&actualizado=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar el perfil");
                 request.setAttribute("tipoMensaje", "error");
@@ -503,6 +506,7 @@ public class UsuarioSistemaControlador extends HttpServlet {
             return;
         }
 
+        // Solo usar forward en caso de error
         request.getRequestDispatcher("PerfilUsuario.jsp").forward(request, response);
     }
 
@@ -544,21 +548,25 @@ public class UsuarioSistemaControlador extends HttpServlet {
 
             if (exito) {
                 String accion = "ACTIVO".equals(nuevoEstado) ? "activado" : "desactivado";
-                request.setAttribute("mensaje", "✅ Usuario " + accion + " exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=listar&estadoCambiado=exito&usuarioAccion=" + accion);
+                return;
             } else {
+                // En caso de error, mantener la lista y mostrar el mensaje
                 request.setAttribute("mensaje", "❌ Error al cambiar el estado del usuario");
                 request.setAttribute("tipoMensaje", "error");
+                listarUsuarios(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de usuario inválido");
+            listarUsuarios(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al cambiar estado de usuario");
             return;
         }
-
-        listarUsuarios(request, response);
     }
 
     /**

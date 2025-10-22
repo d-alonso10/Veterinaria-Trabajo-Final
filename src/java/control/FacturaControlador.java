@@ -357,21 +357,24 @@ public class FacturaControlador extends HttpServlet {
             boolean exito = dao.anularFactura(idFactura, motivo);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Factura anulada exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/FacturaControlador?accion=listar&anulada=exito&id=" + idFactura);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al anular la factura");
                 request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("DetalleFactura.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de factura inválido");
+            request.getRequestDispatcher("DetalleFactura.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al anular factura");
             return;
         }
-
-        request.getRequestDispatcher("DetalleFactura.jsp").forward(request, response);
     }
 
     /**
