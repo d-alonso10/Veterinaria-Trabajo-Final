@@ -202,23 +202,26 @@ public class NotificacionDao {
     // MÉTODO: Marcar notificación como leída
     public boolean marcarNotificacionLeida(int idNotificacion) {
         boolean exito = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
 
-            cstmt = con.prepareCall("{CALL sp_MarcarNotificacionLeida(?)}");
-            cstmt.setInt(1, idNotificacion);
+            String sql = "UPDATE notificacion SET estado = 'enviado' WHERE id_notificacion = ? AND estado = 'pendiente'";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idNotificacion);
             
-            int filasAfectadas = cstmt.executeUpdate();
+            int filasAfectadas = pstmt.executeUpdate();
             exito = (filasAfectadas > 0);
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -229,23 +232,26 @@ public class NotificacionDao {
     // MÉTODO: Marcar notificación como enviada
     public boolean marcarNotificacionEnviada(int idNotificacion) {
         boolean exito = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
 
-            cstmt = con.prepareCall("{CALL sp_MarcarNotificacionEnviada(?)}");
-            cstmt.setInt(1, idNotificacion);
+            String sql = "UPDATE notificacion SET estado = 'enviado', enviado_at = NOW() WHERE id_notificacion = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idNotificacion);
             
-            int filasAfectadas = cstmt.executeUpdate();
+            int filasAfectadas = pstmt.executeUpdate();
             exito = (filasAfectadas > 0);
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -256,19 +262,43 @@ public class NotificacionDao {
     // MÉTODO: Buscar notificaciones con filtros
     public List<NotificacionClienteDTO> buscarNotificaciones(String tipo, String canal, String estado, String contenido) {
         List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
 
-            cstmt = con.prepareCall("{CALL sp_BuscarNotificaciones(?, ?, ?, ?)}");
+            StringBuilder sql = new StringBuilder("SELECT * FROM notificacion WHERE 1=1");
+            List<Object> parametros = new ArrayList<>();
             
-            cstmt.setString(1, tipo);
-            cstmt.setString(2, canal);
-            cstmt.setString(3, estado);
-            cstmt.setString(4, contenido);
+            if (tipo != null && !tipo.isEmpty()) {
+                sql.append(" AND tipo = ?");
+                parametros.add(tipo);
+            }
+            if (canal != null && !canal.isEmpty()) {
+                sql.append(" AND canal = ?");
+                parametros.add(canal);
+            }
+            if (estado != null && !estado.isEmpty()) {
+                sql.append(" AND estado = ?");
+                parametros.add(estado);
+            }
+            if (contenido != null && !contenido.trim().isEmpty()) {
+                sql.append(" AND contenido LIKE ?");
+                parametros.add("%" + contenido + "%");
+            }
             
-            rs = cstmt.executeQuery();
+            sql.append(" ORDER BY enviado_at DESC");
+            
+            pstmt = conn.prepareStatement(sql.toString());
+            
+            for (int i = 0; i < parametros.size(); i++) {
+                pstmt.setObject(i + 1, parametros.get(i));
+            }
+            
+            rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
@@ -287,8 +317,8 @@ public class NotificacionDao {
         } finally {
             try {
                 if (rs != null) rs.close();
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -299,14 +329,18 @@ public class NotificacionDao {
     // MÉTODO: Obtener notificaciones pendientes
     public List<NotificacionClienteDTO> obtenerNotificacionesPendientes() {
         List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
 
-            cstmt = con.prepareCall("{CALL sp_ObtenerNotificacionesPendientes()}");
+            String sql = "SELECT * FROM notificacion WHERE estado = 'pendiente' ORDER BY enviado_at ASC";
             
-            rs = cstmt.executeQuery();
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
@@ -325,8 +359,8 @@ public class NotificacionDao {
         } finally {
             try {
                 if (rs != null) rs.close();
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -337,20 +371,26 @@ public class NotificacionDao {
     // MÉTODO: Obtener notificaciones recientes
     public List<NotificacionClienteDTO> obtenerNotificacionesRecientes(Integer limite) {
         List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
 
-            cstmt = con.prepareCall("{CALL sp_ObtenerNotificacionesRecientes(?)}");
-            
-            if (limite != null) {
-                cstmt.setInt(1, limite);
-            } else {
-                cstmt.setNull(1, Types.INTEGER);
+            String sql = "SELECT * FROM notificacion ORDER BY enviado_at DESC";
+            if (limite != null && limite > 0) {
+                sql += " LIMIT ?";
             }
             
-            rs = cstmt.executeQuery();
+            pstmt = conn.prepareStatement(sql);
+            
+            if (limite != null && limite > 0) {
+                pstmt.setInt(1, limite);
+            }
+            
+            rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
@@ -369,8 +409,8 @@ public class NotificacionDao {
         } finally {
             try {
                 if (rs != null) rs.close();
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }

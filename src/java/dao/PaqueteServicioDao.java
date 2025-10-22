@@ -86,14 +86,19 @@ public class PaqueteServicioDao {
     // MÉTODO: Obtener paquete por ID
     public PaqueteServicio obtenerPaquetePorId(int idPaquete) {
         PaqueteServicio paquete = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
             
-            cstmt = con.prepareCall("{CALL sp_ObtenerPaquetePorId(?)}");
-            cstmt.setInt(1, idPaquete);
+            String sql = "SELECT * FROM paquete_servicio WHERE id_paquete = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idPaquete);
             
-            rs = cstmt.executeQuery();
+            rs = pstmt.executeQuery();
             
             if (rs.next()) {
                 paquete = new PaqueteServicio();
@@ -110,8 +115,8 @@ public class PaqueteServicioDao {
         } finally {
             try {
                 if (rs != null) rs.close();
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -122,15 +127,20 @@ public class PaqueteServicioDao {
     // MÉTODO: Verificar si un servicio ya está en el paquete
     public boolean servicioYaEnPaquete(int idPaquete, int idServicio) {
         boolean existe = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            conn = DriverManager.getConnection(url, user, pass);
             
-            cstmt = con.prepareCall("{CALL sp_VerificarServicioEnPaquete(?, ?)}");
-            cstmt.setInt(1, idPaquete);
-            cstmt.setInt(2, idServicio);
+            String sql = "SELECT COUNT(*) as existe FROM paquete_servicio_item WHERE id_paquete = ? AND id_servicio = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idPaquete);
+            pstmt.setInt(2, idServicio);
             
-            rs = cstmt.executeQuery();
+            rs = pstmt.executeQuery();
             
             if (rs.next()) {
                 existe = rs.getInt("existe") > 0;
@@ -141,8 +151,8 @@ public class PaqueteServicioDao {
         } finally {
             try {
                 if (rs != null) rs.close();
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
