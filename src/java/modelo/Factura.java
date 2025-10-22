@@ -15,6 +15,16 @@ public class Factura {
     private double total;
     private String estado;
     private String metodoPagoSugerido;
+    
+    // Campo compuesto para numero_factura completo (serie + numero)
+    public String getNumeroFactura() {
+        if (serie != null && numero != null) {
+            return serie + "-" + numero;
+        } else if (numero != null) {
+            return numero;
+        }
+        return "";
+    }
 
     public Factura() {}
 

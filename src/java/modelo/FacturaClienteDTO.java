@@ -40,4 +40,14 @@ public class FacturaClienteDTO {
     
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+    
+    // Método auxiliar para obtener número completo de factura
+    public String getNumeroFactura() {
+        if (serie != null && numero != null) {
+            return serie + "-" + numero;
+        } else if (numero != null) {
+            return numero;
+        }
+        return "";
+    }
 }
