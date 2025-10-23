@@ -745,7 +745,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="facturas.jsp">
+                    <a href="<%= request.getContextPath() %>/facturas.jsp">
                         <span class="menu-icon">🧾</span>
                         <span>Facturas</span>
                     </a>
@@ -753,13 +753,13 @@
                 
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
-                    <a href="reportes.jsp">
+                    <a href="<%= request.getContextPath() %>/reportes.jsp">
                         <span class="menu-icon">📈</span>
                         <span>Reportes</span>
                     </a>
                 </li> 
                 <li class="menu-item">
-                    <a href="auditoria.jsp">
+                    <a href="<%= request.getContextPath() %>/auditoria.jsp">
                         <span class="menu-icon">🔍</span>
                         <span>Auditoria</span>
                     </a>
@@ -767,13 +767,13 @@
                 
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item active">
-                    <a href="UtilidadesControlador">
+                    <a href="<%= request.getContextPath() %>/UtilidadesControlador">
                         <span class="menu-icon">🔧</span>
                         <span>Utilidades</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ConfiguracionControlador?accion=listar">
+                    <a href="<%= request.getContextPath() %>/ConfiguracionControlador?accion=listar">
                         <span class="menu-icon">⚙️</span>
                         <span>Configuración</span>
                     </a>
@@ -789,7 +789,7 @@
                         <p>Herramientas de mantenimiento y administración del sistema</p>
                     </div>
                     <div class="header-actions">
-                        <a href="dashboard.jsp" class="btn btn-primary">
+                        <a href="<%= request.getContextPath() %>/dashboard.jsp" class="btn btn-primary">
                             <span>📊 Ir al Dashboard</span>
                         </a>
                         <button onclick="ejecutarDiagnostico()" class="btn btn-warning">
@@ -859,7 +859,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="UtilidadesControlador" method="post" onsubmit="return confirmarLimpieza()">
+                        <form action="<%= request.getContextPath() %>/UtilidadesControlador" method="post" onsubmit="return confirmarLimpieza()">
                             <input type="hidden" name="accion" value="limpiar">
                             <div class="form-group">
                                 <label class="form-label">
@@ -891,7 +891,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="UtilidadesControlador" method="post">
+                        <form action="<%= request.getContextPath() %>/UtilidadesControlador" method="post">
                             <input type="hidden" name="accion" value="backup">
                             <div class="form-group">
                                 <label class="form-label">
@@ -922,7 +922,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="UtilidadesControlador" method="post">
+                        <form action="<%= request.getContextPath() %>/UtilidadesControlador" method="post">
                             <input type="hidden" name="accion" value="recalcular">
                             <div class="card-actions">
                                 <button type="submit" class="btn btn-warning">
@@ -945,7 +945,7 @@
                                 </div>
                             </div>
                         </div>
-                        <form action="UtilidadesControlador" method="get">
+                        <form action="<%= request.getContextPath() %>/UtilidadesControlador" method="get">
                             <input type="hidden" name="accion" value="auditoria">
                             <div class="form-group">
                                 <label class="form-label">
@@ -974,7 +974,7 @@
                             </div>
                         </div>
                         <div class="card-actions">
-                            <a href="UtilidadesControlador?accion=notificaciones" class="btn btn-primary">
+                            <a href="<%= request.getContextPath() %>/UtilidadesControlador?accion=notificaciones" class="btn btn-primary">
                                 <span>🔔 Ver Notificaciones</span>
                             </a>
                             <button type="button" class="btn btn-secondary" onclick="enviarNotificaciones()">
@@ -994,7 +994,7 @@
                             </div>
                         </div>
                         <div class="card-actions">
-                            <a href="UtilidadesControlador?accion=facturasProblema" class="btn btn-danger">
+                            <a href="<%= request.getContextPath() %>/UtilidadesControlador?accion=facturasProblema" class="btn btn-danger">
                                 <span>⚠️ Revisar Problemas</span>
                             </a>
                             <button type="button" class="btn btn-secondary" onclick="generarReporte()">
@@ -1005,10 +1005,10 @@
                 </div>
 
                 <div style="display: flex; gap: 15px; margin-top: 40px; justify-content: center; flex-wrap: wrap;">
-                    <a href="dashboard.jsp" class="btn btn-primary">
+                    <a href="<%= request.getContextPath() %>/dashboard.jsp" class="btn btn-primary">
                         <span>📊 Volver al Dashboard</span>
                     </a>
-                    <a href="menuPrincipal.jsp" class="btn btn-secondary">
+                    <a href="<%= request.getContextPath() %>/menuPrincipal.jsp" class="btn btn-secondary">
                         <span>🏠 Menú Principal</span>
                     </a>
                     <button onclick="ejecutarMantenimiento()" class="btn btn-success">

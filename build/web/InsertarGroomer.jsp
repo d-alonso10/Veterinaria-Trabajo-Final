@@ -765,7 +765,7 @@
                         <p>Complete la información del nuevo groomer para integrarlo al sistema</p>
                     </div>
 
-                    <form action="GroomerControlador" method="POST" id="groomerForm">
+                    <form action="<%= request.getContextPath() %>/GroomerControlador" method="POST" id="groomerForm">
                         <!-- Información Básica -->
                         <div class="form-section">
                             <div class="section-header">

@@ -402,47 +402,47 @@
             <ul class="menu">
                 <li class="menu-item">
                     <span>📊</span>
-                    <a href="Menu.jsp">Dashboard</a>
+                    <a href="<%= request.getContextPath() %>/DashboardControlador">Dashboard</a>
                 </li>
                 <li class="menu-item">
                     <span>👥</span>
-                    <a href="ListaClientes.jsp">Clientes</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">Clientes</a>
                 </li>
                 <li class="menu-item">
                     <span>🐕</span>
-                    <a href="ListaMascotas.jsp">Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">Mascotas</a>
                 </li>
                 <li class="menu-item">
                     <span>👨‍⚕️</span>
-                    <a href="ListaGroomers.jsp">Groomers</a>
+                    <a href="<%= request.getContextPath() %>/GroomerControlador">Groomers</a>
                 </li>
                 <li class="menu-item">
                     <span>🎯</span>
-                    <a href="ListaServicios.jsp">Servicios</a>
+                    <a href="<%= request.getContextPath() %>/ServicioControlador">Servicios</a>
                 </li>
                 <li class="menu-item">
                     <span>📅</span>
-                    <a href="ProximasCitas.jsp">Citas</a>
+                    <a href="<%= request.getContextPath() %>/CitaControlador?accion=todasCitas">Citas</a>
                 </li>
                 <li class="menu-item">
                     <span>⏰</span>
-                    <a href="ColaAtencion.jsp">Cola de Atención</a>
+                    <a href="<%= request.getContextPath() %>/AtencionControlador">Cola de Atención</a>
                 </li>
                 <li class="menu-item">
                     <span>💰</span>
-                    <a href="UtilidadesFacturas.jsp">Facturas</a>
+                    <a href="<%= request.getContextPath() %>/FacturaControlador?accion=listar">Facturas</a>
                 </li>
                 <li class="menu-item">
                     <span>💳</span>
-                    <a href="ListaPagos.jsp">Pagos</a>
+                    <a href="<%= request.getContextPath() %>/PagoControlador?accion=listar">Pagos</a>
                 </li>
                 <li class="menu-item">
                     <span>📋</span>
-                    <a href="ListaPaquetesServicios.jsp">Paquetes</a>
+                    <a href="<%= request.getContextPath() %>/PaqueteServicioControlador?accion=listar">Paquetes</a>
                 </li>
                 <li class="menu-item active">
                     <span>🎁</span>
-                    <a href="ListaPromociones.jsp">Promociones</a>
+                    <a href="<%= request.getContextPath() %>/PromocionControlador?accion=listar">Promociones</a>
                 </li>
                 <li class="menu-item">
                     <span>🔔</span>
@@ -484,7 +484,7 @@
                 </div>
             <% } %>
 
-            <form action="PromocionControlador" method="post" id="formPromocion">
+            <form action="<%= request.getContextPath() %>/PromocionControlador" method="post" id="formPromocion">
                 <input type="hidden" name="accion" value="crearPromocion">
                 
                 <!-- Información Básica -->

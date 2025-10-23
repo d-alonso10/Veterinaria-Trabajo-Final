@@ -789,19 +789,19 @@
                 <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item">
-                    <a href="dashboard.jsp">
+                    <a href="<%= request.getContextPath() %>/dashboard.jsp">
                         <span class="menu-icon">📊</span>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="menu-item active">
-                    <a href="CitaControlador?accion=todasCitas">
+                    <a href="<%= request.getContextPath() %>/CitaControlador?accion=todasCitas">
                         <span class="menu-icon">📅</span>
                         <span>Citas</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="AtencionControlador">
+                    <a href="<%= request.getContextPath() %>/AtencionControlador">
                         <span class="menu-icon">🎯</span>
                         <span>Atención</span>
                     </a>
@@ -810,31 +810,31 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Mascotas</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ServicioControlador">
+                    <a href="<%= request.getContextPath() %>/ServicioControlador">
                         <span class="menu-icon">🛠️</span>
                         <span>Servicios</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ClienteControlador?accion=listarFrecuentes">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarFrecuentes">
                         <span class="menu-icon">🏆</span>
                         <span>Clientes Frecuentes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="BuscarClientes.jsp">
+                    <a href="<%= request.getContextPath() %>/BuscarClientes.jsp">
                         <span class="menu-icon">🔍</span>
                         <span>Búsqueda Avanzada</span>
                     </a>
@@ -843,13 +843,13 @@
                 <!-- Personal y Operaciones -->
                 <div class="menu-section">Personal y Operaciones</div>
                 <li class="menu-item">
-                    <a href="GroomerControlador">
+                    <a href="<%= request.getContextPath() %>/GroomerControlador">
                         <span class="menu-icon">✂️</span>
                         <span>Groomers</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="SucursalControlador?accion=listar">
+                    <a href="<%= request.getContextPath() %>/SucursalControlador?accion=listar">
                         <span class="menu-icon">🏢</span>
                         <span>Sucursales</span>
                     </a>
@@ -858,19 +858,19 @@
                 <!-- Finanzas -->
                 <div class="menu-section">Finanzas</div>
                 <li class="menu-item">
-                    <a href="pagos.jsp">
+                    <a href="<%= request.getContextPath() %>/pagos.jsp">
                         <span class="menu-icon">💳</span>
                         <span>Pagos</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="facturas.jsp">
+                    <a href="<%= request.getContextPath() %>/facturas.jsp">
                         <span class="menu-icon">🧾</span>
                         <span>Facturas</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="promociones.jsp">
+                    <a href="<%= request.getContextPath() %>/promociones.jsp">
                         <span class="menu-icon">🎁</span>
                         <span>Promociones</span>
                     </a>
@@ -879,13 +879,13 @@
                 <!-- Análisis y Control -->
                 <div class="menu-section">Análisis y Control</div>
                 <li class="menu-item">
-                    <a href="ReporteControlador">
+                    <a href="<%= request.getContextPath() %>/ReporteControlador">
                         <span class="menu-icon">📈</span>
                         <span>Reportes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="AuditControlador?accion=listar">
+                    <a href="<%= request.getContextPath() %>/AuditControlador?accion=listar">
                         <span class="menu-icon">🔍</span>
                         <span>Auditoria</span>
                     </a>
@@ -894,7 +894,7 @@
                 <!-- Sistema -->
                 <div class="menu-section">Sistema</div>
                 <li class="menu-item">
-                    <a href="ConfiguracionControlador?accion=listar">
+                    <a href="<%= request.getContextPath() %>/ConfiguracionControlador?accion=listar">
                         <span class="menu-icon">⚙️</span>
                         <span>Configuración</span>
                     </a>
@@ -911,7 +911,7 @@
                         <p>Programe una nueva cita para sus clientes y mascotas - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date()) %></p>
                     </div>
                     <div class="header-actions">
-                        <a href="CitaControlador?accion=todasCitas" class="btn btn-back">← Volver a Citas</a>
+                        <a href="<%= request.getContextPath() %>/CitaControlador?accion=todasCitas" class="btn btn-back">← Volver a Citas</a>
                     </div>
                 </div>
             </div>
@@ -941,7 +941,7 @@
                         <span>📅 Información de la Cita</span>
                     </div>
                     
-                    <form action="CitaControlador" method="POST" id="citaForm">
+                    <form action="<%= request.getContextPath() %>/CitaControlador" method="POST" id="citaForm">
                         <div class="form-section">
                             <h3 class="section-title">🆔 Identificación</h3>
                             <div class="form-grid">
@@ -1053,9 +1053,9 @@
                 </div>
 
                 <div class="navigation">
-                    <a href="CitaControlador?accion=todasCitas" class="btn btn-back">📅 Ver Todas las Citas</a>
-                    <a href="Clientes.jsp" class="btn btn-back">👥 Buscar Clientes</a>
-                    <a href="ListaMascotas.jsp" class="btn btn-back">🐾 Buscar Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/CitaControlador?accion=todasCitas" class="btn btn-back">📅 Ver Todas las Citas</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-back">👥 Buscar Clientes</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-back">🐾 Buscar Mascotas</a>
                 </div>
             </div>
         </div>

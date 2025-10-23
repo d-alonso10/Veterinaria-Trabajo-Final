@@ -868,7 +868,7 @@
                         <p>Complete todos los campos requeridos para registrar una nueva mascota</p>
                     </div>
                     
-                    <form action="MascotaControlador" method="POST" id="mascotaForm">
+                    <form action="<%= request.getContextPath() %>/MascotaControlador" method="POST" id="mascotaForm">
                         <input type="hidden" name="acc" value="Confirmar">
                         
                         <div class="form-section">

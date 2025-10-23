@@ -504,7 +504,7 @@
                 </div>
             <% } %>
 
-            <form action="PaqueteServicioControlador" method="post" id="formPaquete">
+            <form action="<%= request.getContextPath() %>/PaqueteServicioControlador" method="post" id="formPaquete">
                 <input type="hidden" name="accion" value="crearPaqueteServicio">
                 
                 <!-- Información Básica del Paquete -->
