@@ -697,142 +697,8 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar Menu -->
-        <div class="sidebar">
-            <div class="logo">
-                <h1><span class="logo-icon">🐕</span> Terán Vet</h1>
-            </div>
-            
-            <div class="user-info">
-                <div class="user-avatar">JS</div>
-                <div class="user-details">
-                    <h3>Juan Sánchez</h3>
-                    <p>Administrador</p>
-                </div>
-            </div>
-            
-            <ul class="menu">
-                <!-- Núcleo del Negocio -->
-                <div class="menu-section">Núcleo del Negocio</div>
-                <li class="menu-item active">
-                    <a href="dashboard.jsp">
-                        <span class="menu-icon">📊</span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="CitaControlador?accion=todasCitas">
-                        <span class="menu-icon">📅</span>
-                        <span>Citas</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="AtencionControlador">
-                        <span class="menu-icon">🎯</span>
-                        <span>Atención</span>
-                    </a>
-                </li>
-                
-                <!-- Gestión de Clientes -->
-                <div class="menu-section">Gestión de Clientes</div>
-                <li class="menu-item">
-                    <a href="Clientes.jsp">
-                        <span class="menu-icon">👥</span>
-                        <span>Clientes</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ListaMascotas.jsp">
-                        <span class="menu-icon">🐾</span>
-                        <span>Mascotas</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ServicioControlador">
-                        <span class="menu-icon">🛠️</span>
-                        <span>Servicios</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ClienteControlador?accion=listarFrecuentes">
-                        <span class="menu-icon">🏆</span>
-                        <span>Clientes Frecuentes</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="BuscarClientes.jsp">
-                        <span class="menu-icon">🔍</span>
-                        <span>Búsqueda Avanzada</span>
-                    </a>
-                </li>
-                
-                <!-- Personal y Operaciones -->
-                <div class="menu-section">Personal y Operaciones</div>
-                <li class="menu-item">
-                    <a href="GroomerControlador">
-                        <span class="menu-icon">✂️</span>
-                        <span>Groomers</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="SucursalControlador?accion=listar">
-                        <span class="menu-icon">🏢</span>
-                        <span>Sucursales</span>
-                    </a>
-                </li>
-                
-                <!-- Finanzas -->
-                <div class="menu-section">Finanzas</div>
-                <li class="menu-item">
-                    <a href="pagos.jsp">
-                        <span class="menu-icon">💳</span>
-                        <span>Pagos</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="facturas.jsp">
-                        <span class="menu-icon">🧾</span>
-                        <span>Facturas</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="promociones.jsp">
-                        <span class="menu-icon">🎁</span>
-                        <span>Promociones</span>
-                    </a>
-                </li>
-                
-                <!-- Análisis y Control -->
-                <div class="menu-section">Análisis y Control</div>
-                <li class="menu-item">
-                    <a href="ReporteControlador">
-                        <span class="menu-icon">📈</span>
-                        <span>Reportes</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="AuditControlador?accion=listar">
-                        <span class="menu-icon">🔍</span>
-                        <span>Auditoria</span>
-                    </a>
-                </li>
-                
-                <!-- Sistema -->
-                <div class="menu-section">Sistema</div>
-                <li class="menu-item">
-                    <a href="UtilidadesControlador">
-                        <span class="menu-icon">🔧</span>
-                        <span>Utilidades</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="ConfiguracionControlador?accion=listar">
-                        <span class="menu-icon">⚙️</span>
-                        <span>Configuración</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+        <!-- Sidebar Menu - Incluido desde includes/menu.jsp para seguir patrón MVC -->
+        <jsp:include page="includes/menu.jsp" />
 
         <!-- Main Content -->
         <div class="content">
@@ -843,8 +709,8 @@
                         <p>Resumen completo del sistema - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date()) %></p>
                     </div>
                     <div class="header-actions">
-                        <a href="CitaControlador?accion=formularioInsertar" class="btn btn-success">➕ Nueva Cita</a>
-                        <a href="Clientes.jsp" class="btn btn-primary">👤 Agregar Cliente</a>
+                        <a href="<%= request.getContextPath() %>/CitaControlador?accion=mostrarFormulario" class="btn btn-success">➕ Nueva Cita</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=mostrarFormulario" class="btn btn-primary">👤 Agregar Cliente</a>
                     </div>
                 </div>
             </div>
@@ -880,25 +746,25 @@
                         <span class="action-icon">📅</span>
                         <div class="action-title">Agendar Cita</div>
                         <div class="action-description">Programar nueva cita para cliente</div>
-                        <a href="CitaControlador?accion=formularioInsertar" class="btn btn-primary btn-small">Acceder</a>
+                        <a href="<%= request.getContextPath() %>/CitaControlador?accion=mostrarFormulario" class="btn btn-primary btn-small">Acceder</a>
                     </div>
                     <div class="action-card">
                         <span class="action-icon">👤</span>
                         <div class="action-title">Nuevo Cliente</div>
                         <div class="action-description">Registrar nuevo cliente en el sistema</div>
-                        <a href="Clientes.jsp" class="btn btn-success btn-small">Registrar</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=mostrarFormulario" class="btn btn-success btn-small">Registrar</a>
                     </div>
                     <div class="action-card">
                         <span class="action-icon">🐾</span>
                         <div class="action-title">Registrar Mascota</div>
                         <div class="action-description">Agregar mascota a cliente existente</div>
-                        <a href="ListaMascotas.jsp" class="btn btn-info btn-small">Gestionar</a>
+                        <a href="<%= request.getContextPath() %>/MascotaControlador?accion=mostrarFormulario" class="btn btn-info btn-small">Gestionar</a>
                     </div>
                     <div class="action-card">
                         <span class="action-icon">💳</span>
                         <div class="action-title">Registrar Pago</div>
                         <div class="action-description">Procesar pago de servicios</div>
-                        <a href="pagos.jsp" class="btn btn-warning btn-small">Pagar</a>
+                        <a href="<%= request.getContextPath() %>/PagoControlador?accion=mostrarFormulario" class="btn btn-warning btn-small">Pagar</a>
                     </div>
                 </div>
 

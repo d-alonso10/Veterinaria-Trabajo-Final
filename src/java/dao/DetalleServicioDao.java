@@ -164,4 +164,62 @@ public class DetalleServicioDao {
             }
         }
     }
+
+    // MÉTODO: Eliminar detalle de servicio
+    public boolean eliminarDetalleServicio(int idDetalle) {
+        boolean exito = false;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_EliminarDetalleServicio(?)}");
+            cstmt.setInt(1, idDetalle);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Actualizar detalle de servicio
+    public boolean actualizarDetalleServicio(int idDetalle, int cantidad, double precioUnitario, String observaciones) {
+        boolean exito = false;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+
+            cstmt = con.prepareCall("{CALL sp_ActualizarDetalleServicio(?, ?, ?, ?)}");
+            
+            cstmt.setInt(1, idDetalle);
+            cstmt.setInt(2, cantidad);
+            cstmt.setDouble(3, precioUnitario);
+            cstmt.setString(4, observaciones);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
 }

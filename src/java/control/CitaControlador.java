@@ -183,16 +183,20 @@ public class CitaControlador extends HttpServlet {
             boolean exito = dao.crearCita(cita);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Cita creada con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&creada=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear cita");
+                request.getRequestDispatcher("CrearCita.jsp").forward(request, response);
+                return;
             }
 
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
+            request.getRequestDispatcher("CrearCita.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("CrearCita.jsp").forward(request, response);
     }
 
     // MÉTODO: Reprogramar cita
@@ -217,20 +221,28 @@ public class CitaControlador extends HttpServlet {
             boolean exito = dao.reprogramarCita(idCita, nuevaFecha);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Cita reprogramada con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&reprogramada=exito&id=" + idCita);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al reprogramar cita");
+                request.getRequestDispatcher("ReprogramarCita.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Error: ID Cita debe ser un número válido");
+            request.getRequestDispatcher("ReprogramarCita.jsp").forward(request, response);
+            return;
         } catch (IllegalArgumentException e) {
             request.setAttribute("mensaje", "❌ Error: Formato de fecha inválido");
+            request.getRequestDispatcher("ReprogramarCita.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error al reprogramar cita: " + e.getMessage());
+            request.getRequestDispatcher("ReprogramarCita.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("ReprogramarCita.jsp").forward(request, response);
     }
 
     // MÉTODO: Cancelar cita
@@ -250,18 +262,24 @@ public class CitaControlador extends HttpServlet {
             boolean exito = dao.cancelarCita(idCita);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Cita cancelada con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&cancelada=exito&id=" + idCita);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al cancelar cita");
+                request.getRequestDispatcher("CancelarCita.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Error: ID Cita debe ser un número válido");
+            request.getRequestDispatcher("CancelarCita.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error al cancelar cita: " + e.getMessage());
+            request.getRequestDispatcher("CancelarCita.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("CancelarCita.jsp").forward(request, response);
     }
 
     // MÉTODO: Confirmar asistencia a cita
@@ -281,18 +299,21 @@ public class CitaControlador extends HttpServlet {
             boolean exito = dao.confirmarAsistenciaCita(idCita);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Asistencia confirmada con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&confirmada=exito&id=" + idCita);
+                return;
             } else {
-                request.setAttribute("mensaje", "❌ Error al confirmar asistencia");
+                response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&error=confirmar_asistencia");
+                return;
             }
 
         } catch (NumberFormatException e) {
-            request.setAttribute("mensaje", "❌ Error: ID Cita debe ser un número válido");
+            response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&error=id_invalido");
+            return;
         } catch (Exception e) {
-            request.setAttribute("mensaje", "❌ Error al confirmar asistencia: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/CitaControlador?accion=todasCitas&error=sistema");
+            return;
         }
-
-        request.getRequestDispatcher("CitaControlador?accion=todasCitas").forward(request, response);
     }
 
     // MÉTODO: Obtener próximas citas de un cliente
@@ -412,20 +433,28 @@ public class CitaControlador extends HttpServlet {
                     turnoNum, tiempoEstimadoInicio, tiempoEstimadoFin, prioridad);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Atención creada desde cita con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/AtencionControlador?accion=colaActual&creadaDesdeCita=exito&idCita=" + idCita);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear atención desde cita");
+                request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Error: Los IDs y números deben ser válidos");
+            request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+            return;
         } catch (IllegalArgumentException e) {
             request.setAttribute("mensaje", "❌ Error: Formato de fecha inválido");
+            request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+            return;
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error al crear atención desde cita: " + e.getMessage());
+            request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
     }
 
     // Método auxiliar para limpiar parámetros

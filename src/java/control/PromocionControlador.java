@@ -33,6 +33,7 @@ public class PromocionControlador extends HttpServlet {
                     case "listarActivas":
                         listarPromocionesActivas(request, response);
                         break;
+                    case "listar":
                     case "listarTodas":
                         listarTodasPromociones(request, response);
                         break;
@@ -54,11 +55,14 @@ public class PromocionControlador extends HttpServlet {
                     case "validarPromocion":
                         validarPromocionParaCliente(request, response);
                         break;
+                    case "mostrarFormulario":
+                        mostrarFormularioCreacion(request, response);
+                        break;
                     default:
-                        response.sendRedirect("ListaPromociones.jsp");
+                        listarTodasPromociones(request, response);
                 }
             } else {
-                response.sendRedirect("ListaPromociones.jsp");
+                listarTodasPromociones(request, response);
             }
         } catch (Exception e) {
             manejarError(request, response, e, "Error general en el controlador de promociones");
@@ -177,17 +181,9 @@ public class PromocionControlador extends HttpServlet {
             int idPromocionCreada = dao.insertarPromocion(nombre, descripcion, tipo, valor, fechaInicio, fechaFin);
 
             if (idPromocionCreada > 0) {
-                request.setAttribute("mensaje", "✅ Promoción creada exitosamente con ID: " + idPromocionCreada);
-                request.setAttribute("tipoMensaje", "success");
-                request.setAttribute("idPromocionCreada", idPromocionCreada);
-                
-                // Limpiar formulario
-                request.removeAttribute("nombre");
-                request.removeAttribute("descripcion");
-                request.removeAttribute("tipo");
-                request.removeAttribute("valor");
-                request.removeAttribute("fechaInicio");
-                request.removeAttribute("fechaFin");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PromocionControlador?accion=listar&creada=exito&id=" + idPromocionCreada);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear la promoción");
                 request.setAttribute("tipoMensaje", "error");
@@ -198,6 +194,7 @@ public class PromocionControlador extends HttpServlet {
             return;
         }
 
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher("CrearPromocion.jsp").forward(request, response);
     }
 
@@ -263,6 +260,14 @@ public class PromocionControlador extends HttpServlet {
     private void listarTodasPromociones(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creada = request.getParameter("creada");
+            String idCreada = request.getParameter("id");
+            if ("exito".equals(creada)) {
+                request.setAttribute("mensaje", "✅ Promoción creada exitosamente" + (idCreada != null ? " con ID: " + idCreada : ""));
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             PromocionDao dao = new PromocionDao();
             List<Promocion> promociones = dao.listarTodasPromociones();
 
@@ -453,8 +458,9 @@ public class PromocionControlador extends HttpServlet {
             boolean exito = dao.actualizarPromocion(idPromocion, nombre, descripcion, valor);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Promoción actualizada exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PromocionControlador?accion=listar&actualizada=exito&id=" + idPromocion);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar la promoción");
                 request.setAttribute("tipoMensaje", "error");
@@ -467,6 +473,7 @@ public class PromocionControlador extends HttpServlet {
             return;
         }
 
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher("EditarPromocion.jsp").forward(request, response);
     }
 
@@ -510,22 +517,25 @@ public class PromocionControlador extends HttpServlet {
             if (exito) {
                 String accion = "ACTIVA".equals(nuevoEstado) ? "activada" : 
                               "INACTIVA".equals(nuevoEstado) ? "desactivada" : "marcada como expirada";
-                request.setAttribute("mensaje", "✅ Promoción " + accion + " exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PromocionControlador?accion=listar&estado=cambio_exito&accion_estado=" + accion);
+                return;
             } else {
+                // En caso de error, usar forward para mostrar el mensaje
                 request.setAttribute("mensaje", "❌ Error al cambiar el estado de la promoción");
                 request.setAttribute("tipoMensaje", "error");
+                listarTodasPromociones(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de promoción inválido");
+            listarTodasPromociones(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al cambiar estado de promoción");
             return;
         }
-
-        // Redirigir a la lista actualizada
-        listarTodasPromociones(request, response);
     }
 
     /**
@@ -548,22 +558,25 @@ public class PromocionControlador extends HttpServlet {
             boolean exito = dao.eliminarPromocion(idPromocion);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Promoción eliminada exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PromocionControlador?accion=listar&eliminada=exito&id=" + idPromocion);
+                return;
             } else {
+                // En caso de error, usar forward para mostrar el mensaje
                 request.setAttribute("mensaje", "❌ Error al eliminar la promoción");
                 request.setAttribute("tipoMensaje", "error");
+                listarTodasPromociones(request, response);
+                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de promoción inválido");
+            listarTodasPromociones(request, response);
+            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al eliminar promoción");
             return;
         }
-
-        // Redirigir a la lista actualizada
-        listarTodasPromociones(request, response);
     }
 
     /**
@@ -647,6 +660,15 @@ public class PromocionControlador extends HttpServlet {
         request.setAttribute("tipoMensaje", "error");
         
         request.getRequestDispatcher("ListaPromociones.jsp").forward(request, response);
+    }
+
+    /**
+     * Muestra el formulario de creación de promociones
+     */
+    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Solo mostrar el formulario limpio
+        request.getRequestDispatcher("CrearPromocion.jsp").forward(request, response);
     }
 
     /**

@@ -165,16 +165,20 @@ public class AtencionControlador extends HttpServlet {
             boolean exito = dao.crearAtencionWalkIn(atencion);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Atención walk-in creada con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/AtencionControlador?accion=colaActual&creada=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear atención walk-in");
+                request.getRequestDispatcher("CrearAtencionWalkIn.jsp").forward(request, response);
+                return;
             }
 
         } catch (Exception e) {
             request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
+            request.getRequestDispatcher("CrearAtencionWalkIn.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("CrearAtencionWalkIn.jsp").forward(request, response);
     }
 
     private void actualizarEstadoAtencion(HttpServletRequest request, HttpServletResponse response)
@@ -220,23 +224,25 @@ public class AtencionControlador extends HttpServlet {
 
             if (exito) {
                 System.out.println("✅ Actualización exitosa");
-                request.setAttribute("mensaje", "✅ Estado de atención actualizado con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/AtencionControlador?accion=colaActual&estadoActualizado=exito&id=" + idAtencion);
+                return;
             } else {
                 System.out.println("❌ Error en la actualización BD");
-                request.setAttribute("mensaje", "❌ Error al actualizar estado de atención");
+                response.sendRedirect(request.getContextPath() + "/AtencionControlador?accion=colaActual&error=actualizar_estado");
+                return;
             }
 
         } catch (NumberFormatException e) {
             System.out.println("❌ ERROR: NumberFormatException: " + e.getMessage());
-            request.setAttribute("mensaje", "❌ Error: ID Atención debe ser un número válido");
+            response.sendRedirect(request.getContextPath() + "/AtencionControlador?accion=colaActual&error=id_invalido");
+            return;
         } catch (Exception e) {
             System.out.println("❌ ERROR: Exception: " + e.getMessage());
             e.printStackTrace();
-            request.setAttribute("mensaje", "❌ Error al actualizar estado de atención: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/AtencionControlador?accion=colaActual&error=sistema");
+            return;
         }
-
-        System.out.println("=== FINALIZANDO ACTUALIZACIÓN ===");
-        obtenerColaActual(request, response); // CORREGIDO
     }
 
     // MÉTODO: Obtener cola actual de atenciones

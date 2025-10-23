@@ -1,6 +1,8 @@
 package dao;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import modelo.PaqueteServicio;
 import modelo.PaqueteServicioItem;
 
@@ -81,125 +83,283 @@ public class PaqueteServicioDao {
         return exito;
     }
 
-    // Método main para probar solo el último método agregado
-    public static void main(String[] args) {
-        PaqueteServicioDao paqueteDAO = new PaqueteServicioDao();
-
-        System.out.println("=== Probando sp_AgregarServicioPaquete ===");
+    // MÉTODO: Obtener paquete por ID
+    public PaqueteServicio obtenerPaquetePorId(int idPaquete) {
+        PaqueteServicio paquete = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         
-        // Primero creamos un paquete de ejemplo
-        PaqueteServicio paqueteEjemplo = new PaqueteServicio();
-        paqueteEjemplo.setNombre("Paquete Spa Completo");
-        paqueteEjemplo.setDescripcion("Servicio de spa completo para mascotas consentidas");
-        paqueteEjemplo.setPrecioTotal(200.00);
-        
-        int idPaquete = paqueteDAO.crearPaqueteServicio(paqueteEjemplo);
-        
-        if (idPaquete == -1) {
-            System.out.println("❌ No se pudo crear el paquete de ejemplo. Usando ID 1 para pruebas.");
-            idPaquete = 1; // ID de paquete existente para pruebas
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+            
+            String sql = "SELECT * FROM paquete_servicio WHERE id_paquete = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idPaquete);
+            
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                paquete = new PaqueteServicio();
+                paquete.setIdPaquete(rs.getInt("id_paquete"));
+                paquete.setNombre(rs.getString("nombre"));
+                paquete.setDescripcion(rs.getString("descripcion"));
+                paquete.setPrecioTotal(rs.getDouble("precio_total"));
+                paquete.setCreatedAt(rs.getTimestamp("created_at"));
+                paquete.setUpdatedAt(rs.getTimestamp("updated_at"));
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return paquete;
+    }
 
-        System.out.println("\n🛠️  AGREGANDO SERVICIOS AL PAQUETE ID: " + idPaquete);
-        System.out.println("===========================================");
-
-        // Ejemplo 1: Agregar baño al paquete
-        PaqueteServicioItem item1 = new PaqueteServicioItem();
-        item1.setIdPaquete(idPaquete);
-        item1.setIdServicio(1); // ID de servicio "Baño completo"
-        item1.setCantidad(1);
+    // MÉTODO: Verificar si un servicio ya está en el paquete
+    public boolean servicioYaEnPaquete(int idPaquete, int idServicio) {
+        boolean existe = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         
-        boolean agregado1 = paqueteDAO.agregarServicioPaquete(item1);
-        
-        if (agregado1) {
-            System.out.println("✅ Baño completo agregado al paquete");
-            System.out.println("   Servicio ID: " + item1.getIdServicio());
-            System.out.println("   Cantidad: " + item1.getCantidad());
-        } else {
-            System.out.println("❌ Error al agregar baño al paquete");
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+            
+            String sql = "SELECT COUNT(*) as existe FROM paquete_servicio_item WHERE id_paquete = ? AND id_servicio = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idPaquete);
+            pstmt.setInt(2, idServicio);
+            
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                existe = rs.getInt("existe") > 0;
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return existe;
+    }
 
-        // Ejemplo 2: Agregar corte de pelo
-        PaqueteServicioItem item2 = new PaqueteServicioItem();
-        item2.setIdPaquete(idPaquete);
-        item2.setIdServicio(2); // ID de servicio "Corte de pelo"
-        item2.setCantidad(1);
-        
-        boolean agregado2 = paqueteDAO.agregarServicioPaquete(item2);
-        
-        if (agregado2) {
-            System.out.println("\n✅ Corte de pelo agregado al paquete");
-            System.out.println("   Servicio ID: " + item2.getIdServicio());
-            System.out.println("   Cantidad: " + item2.getCantidad());
-        } else {
-            System.out.println("\n❌ Error al agregar corte de pelo al paquete");
+    // MÉTODO: Listar todos los paquetes de servicios
+    public List<PaqueteServicio> listarPaquetesServicio() {
+        List<PaqueteServicio> paquetes = new ArrayList<>();
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_ListarPaquetesServicio()}");
+            
+            rs = cstmt.executeQuery();
+            
+            while (rs.next()) {
+                PaqueteServicio paquete = new PaqueteServicio();
+                paquete.setIdPaquete(rs.getInt("id_paquete"));
+                paquete.setNombre(rs.getString("nombre"));
+                paquete.setDescripcion(rs.getString("descripcion"));
+                paquete.setPrecioTotal(rs.getDouble("precio_total"));
+                paquete.setCreatedAt(rs.getTimestamp("created_at"));
+                paquete.setUpdatedAt(rs.getTimestamp("updated_at"));
+                
+                paquetes.add(paquete);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return paquetes;
+    }
 
-        // Ejemplo 3: Agregar limpieza dental (cantidad 2)
-        PaqueteServicioItem item3 = new PaqueteServicioItem();
-        item3.setIdPaquete(idPaquete);
-        item3.setIdServicio(3); // ID de servicio "Limpieza dental"
-        item3.setCantidad(2);
-        
-        boolean agregado3 = paqueteDAO.agregarServicioPaquete(item3);
-        
-        if (agregado3) {
-            System.out.println("\n✅ Limpieza dental agregada al paquete");
-            System.out.println("   Servicio ID: " + item3.getIdServicio());
-            System.out.println("   Cantidad: " + item3.getCantidad());
-        } else {
-            System.out.println("\n❌ Error al agregar limpieza dental al paquete");
+    // MÉTODO: Obtener servicios de un paquete
+    public List<PaqueteServicioItem> obtenerServiciosPaquete(int idPaquete) {
+        List<PaqueteServicioItem> servicios = new ArrayList<>();
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_ObtenerServiciosPaquete(?)}");
+            cstmt.setInt(1, idPaquete);
+            
+            rs = cstmt.executeQuery();
+            
+            while (rs.next()) {
+                PaqueteServicioItem item = new PaqueteServicioItem();
+                item.setIdPaquete(rs.getInt("id_paquete"));
+                item.setIdServicio(rs.getInt("id_servicio"));
+                item.setCantidad(rs.getInt("cantidad"));
+                
+                // Datos adicionales del servicio
+                item.setNombreServicio(rs.getString("nombre_servicio"));
+                item.setPrecioUnitario(rs.getDouble("precio_base"));
+                item.setDuracionMinutos(rs.getInt("duracion_estimada_min"));
+                
+                servicios.add(item);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return servicios;
+    }
 
-        // Ejemplo 4: Actualizar cantidad de un servicio existente
-        PaqueteServicioItem item4 = new PaqueteServicioItem();
-        item4.setIdPaquete(idPaquete);
-        item4.setIdServicio(1); // Mismo servicio que item1
-        item4.setCantidad(2);   // Cambiar cantidad de 1 a 2
-        
-        boolean actualizado = paqueteDAO.agregarServicioPaquete(item4);
-        
-        if (actualizado) {
-            System.out.println("\n🔄 Cantidad de baño actualizada en el paquete");
-            System.out.println("   Servicio ID: " + item4.getIdServicio());
-            System.out.println("   Nueva cantidad: " + item4.getCantidad());
-            System.out.println("   ⚠️  Se usó ON DUPLICATE KEY UPDATE");
-        } else {
-            System.out.println("\n❌ Error al actualizar la cantidad");
+    // MÉTODO: Actualizar paquete de servicio
+    public boolean actualizarPaqueteServicio(int idPaquete, String nombre, String descripcion, double precioTotal, String estado) {
+        boolean exito = false;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_ActualizarPaqueteServicio(?, ?, ?, ?, ?)}");
+            
+            cstmt.setInt(1, idPaquete);
+            cstmt.setString(2, nombre);
+            cstmt.setString(3, descripcion);
+            cstmt.setDouble(4, precioTotal);
+            cstmt.setString(5, estado);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
+        return exito;
+    }
 
-        // Resumen del paquete creado
-        System.out.println("\n📦 RESUMEN DEL PAQUETE CREADO:");
-        System.out.println("==============================");
-        System.out.println("Nombre: " + paqueteEjemplo.getNombre());
-        System.out.println("Precio total: S/ " + paqueteEjemplo.getPrecioTotal());
-        System.out.println("Descripción: " + paqueteEjemplo.getDescripcion());
-        System.out.println("Servicios agregados: 4 (con una actualización)");
-        
-        // Ventajas del ON DUPLICATE KEY UPDATE
-        System.out.println("\n🎯 VENTAJAS DEL ON DUPLICATE KEY UPDATE:");
-        System.out.println("=======================================");
-        System.out.println("🔄 Evita duplicados automáticamente");
-        System.out.println("⚡ Actualiza cantidades sin verificar primero");
-        System.out.println("💾 Una sola operación para insertar/actualizar");
-        System.out.println("🚀 Mejor rendimiento en operaciones repetitivas");
-        
-        // Próximos pasos recomendados
-        System.out.println("\n🚀 PRÓXIMOS PASOS RECOMENDADOS:");
-        System.out.println("==============================");
-        System.out.println("1. Crear método para consultar servicios de un paquete");
-        System.out.println("2. Implementar validación de precios de paquetes");
-        System.out.println("3. Crear método para eliminar servicios de paquetes");
-        System.out.println("4. Desarrollar reporte de paquetes más populares");
-        System.out.println("5. Integrar paquetes en el proceso de facturación");
-        
-        // Ejemplo de uso en facturación
-        System.out.println("\n💰 EJEMPLO DE USO EN FACTURACIÓN:");
-        System.out.println("================================");
-        System.out.println("Cuando un cliente compra un paquete:");
-        System.out.println("1. Se factura el precio total del paquete");
-        System.out.println("2. Se registran automáticamente todos los servicios incluidos");
-        System.out.println("3. El groomer ve todos los servicios a realizar");
-        System.out.println("4. El sistema calcula el tiempo total estimado");
+    // MÉTODO: Eliminar paquete de servicio
+    public boolean eliminarPaqueteServicio(int idPaquete) {
+        boolean exito = false;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_EliminarPaqueteServicio(?)}");
+            cstmt.setInt(1, idPaquete);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Eliminar servicio de un paquete
+    public boolean eliminarServicioPaquete(int idPaquete, int idServicio) {
+        boolean exito = false;
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_EliminarServicioPaquete(?, ?)}");
+            cstmt.setInt(1, idPaquete);
+            cstmt.setInt(2, idServicio);
+            
+            int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Buscar paquetes de servicios con filtros
+    public List<PaqueteServicio> buscarPaquetesServicio(String termino, String estado, double precioMin, double precioMax) {
+        List<PaqueteServicio> paquetes = new ArrayList<>();
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection(url, user, pass);
+            
+            cstmt = con.prepareCall("{CALL sp_BuscarPaquetesServicio(?, ?, ?, ?)}");
+            
+            cstmt.setString(1, termino);
+            cstmt.setString(2, estado);
+            cstmt.setDouble(3, precioMin);
+            cstmt.setDouble(4, precioMax);
+            
+            rs = cstmt.executeQuery();
+            
+            while (rs.next()) {
+                PaqueteServicio paquete = new PaqueteServicio();
+                paquete.setIdPaquete(rs.getInt("id_paquete"));
+                paquete.setNombre(rs.getString("nombre"));
+                paquete.setDescripcion(rs.getString("descripcion"));
+                paquete.setPrecioTotal(rs.getDouble("precio_total"));
+                paquete.setCreatedAt(rs.getTimestamp("created_at"));
+                paquete.setUpdatedAt(rs.getTimestamp("updated_at"));
+                
+                paquetes.add(paquete);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (cstmt != null) cstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return paquetes;
     }
 }

@@ -40,6 +40,9 @@ public class MascotaControlador extends HttpServlet {
                 case "historial":
                     verHistorialMascota(request, response);
                     break;
+                case "listarTodas":
+                    listarTodasMascotas(request, response);
+                    break;
                 default:
                     response.sendRedirect("Menu.jsp");
             }
@@ -109,7 +112,9 @@ public class MascotaControlador extends HttpServlet {
             boolean exito = dao.insertarMascota(mascota);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Mascota insertada con éxito");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/MascotaControlador?accion=listarTodas&creado=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al insertar mascota");
             }
@@ -118,6 +123,7 @@ public class MascotaControlador extends HttpServlet {
             request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
         }
 
+        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher("InsertarMascota.jsp").forward(request, response);
     }
 
@@ -207,6 +213,32 @@ public class MascotaControlador extends HttpServlet {
         }
 
         request.getRequestDispatcher("HistorialMascota.jsp").forward(request, response);
+    }
+
+    // NUEVO MÉTODO: Listar todas las mascotas
+    private void listarTodasMascotas(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Verificar si viene de una creación exitosa
+            String creado = request.getParameter("creado");
+            if ("exito".equals(creado)) {
+                request.setAttribute("mensaje", "✅ Mascota creada exitosamente");
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
+            MascotaDao dao = new MascotaDao();
+            List<modelo.MascotaClienteDTO> mascotas = dao.buscarMascotas("");
+
+            request.setAttribute("mascotas", mascotas);
+            request.setAttribute("totalMascotas", mascotas != null ? mascotas.size() : 0);
+
+        } catch (Exception e) {
+            request.setAttribute("mascotas", new ArrayList<>());
+            request.setAttribute("totalMascotas", 0);
+            request.setAttribute("mensaje", "❌ Error al cargar mascotas: " + e.getMessage());
+        }
+
+        request.getRequestDispatcher("ListaMascotas.jsp").forward(request, response);
     }
 
     // Método auxiliar para limpiar parámetros

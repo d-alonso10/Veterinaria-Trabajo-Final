@@ -1,0 +1,196 @@
+/* Common Menu Styles for PetCare System */
+
+/* Color Variables */
+:root {
+    --primary-color: #abcbd5;
+    --primary-dark: #91b5c0;
+    --secondary-color: #d5c4ad;
+    --accent-color: #e6f3f7;
+    --white: #ffffff;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+    --success-color: #4caf50;
+    --warning-color: #ffc107;
+    --danger-color: #f44336;
+    --info-color: #2196f3;
+    --background: #f8fbfc;
+    --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --radius: 16px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 300px;
+    background: var(--gradient-primary);
+    color: var(--white);
+    padding: 0;
+    box-shadow: var(--shadow);
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.logo {
+    padding: 25px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.logo h1 {
+    font-size: 1.8em;
+    margin: 0;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 1.2em;
+}
+
+.user-info {
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2em;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-details h3 {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.user-details p {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.menu {
+    list-style: none;
+    padding: 25px 0;
+    margin: 0;
+}
+
+.menu-section {
+    padding: 15px 25px;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 1.5px;
+    margin-top: 15px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.menu-item {
+    padding: 16px 30px;
+    border-left: 4px solid transparent;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.6s;
+}
+
+.menu-item:hover::before {
+    left: 100%;
+}
+
+.menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-left-color: var(--white);
+    transform: translateX(5px);
+}
+
+.menu-item.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-left-color: var(--white);
+}
+
+.menu-item a {
+    color: var(--white);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+.menu-icon {
+    font-size: 1.3em;
+    width: 24px;
+    text-align: center;
+}
+
+/* Main Content Adjustment */
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.content, .main-content {
+    margin-left: 300px;
+    flex: 1;
+    background: var(--background);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .sidebar {
+        width: 250px;
+    }
+    .content, .main-content {
+        margin-left: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .content, .main-content {
+        margin-left: 0;
+    }
+}

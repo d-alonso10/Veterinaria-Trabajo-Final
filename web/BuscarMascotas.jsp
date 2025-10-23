@@ -961,13 +961,13 @@
                             <% if (totalResultados != null) { %>
                                 <span><%= totalResultados %></span> mascotas encontradas
                                 <% if (terminoBusqueda != null && !terminoBusqueda.isEmpty()) { %>
-                                    para "<%= terminoBusqueda %>"
+                                     para "<%= terminoBusqueda %>"
                                 <% } %>
                             <% } else if (mascotas != null) { %>
                                 <span><%= mascotas.size() %></span> mascotas en resultados
-                            <% } %>
+               z i             <% } %>
                         </div>
-                        <div class="quick-actions">
+                        
                             <a href="InsertarMascota.jsp" class="btn btn-success btn-small">➕ Nueva Mascota</a>
                             <button onclick="exportarResultados()" class="btn btn-secondary btn-small">📊 Exportar</button>
                             <button onclick="limpiarBusqueda()" class="btn btn-warning btn-small">🔄 Limpiar</button>

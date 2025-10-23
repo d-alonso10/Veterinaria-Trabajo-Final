@@ -198,4 +198,232 @@ public class NotificacionDao {
         List<NotificacionClienteDTO> notificacionesLimitadas = notificacionDAO.obtenerNotificacionesCliente(destinatarioId, 5);
         System.out.println("Notificaciones obtenidas: " + notificacionesLimitadas.size());
     }
+
+    // MÉTODO: Marcar notificación como leída
+    public boolean marcarNotificacionLeida(int idNotificacion) {
+        boolean exito = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+
+            String sql = "UPDATE notificacion SET estado = 'enviado' WHERE id_notificacion = ? AND estado = 'pendiente'";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idNotificacion);
+            
+            int filasAfectadas = pstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Marcar notificación como enviada
+    public boolean marcarNotificacionEnviada(int idNotificacion) {
+        boolean exito = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+
+            String sql = "UPDATE notificacion SET estado = 'enviado', enviado_at = NOW() WHERE id_notificacion = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idNotificacion);
+            
+            int filasAfectadas = pstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return exito;
+    }
+
+    // MÉTODO: Buscar notificaciones con filtros
+    public List<NotificacionClienteDTO> buscarNotificaciones(String tipo, String canal, String estado, String contenido) {
+        List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+
+            StringBuilder sql = new StringBuilder("SELECT * FROM notificacion WHERE 1=1");
+            List<Object> parametros = new ArrayList<>();
+            
+            if (tipo != null && !tipo.isEmpty()) {
+                sql.append(" AND tipo = ?");
+                parametros.add(tipo);
+            }
+            if (canal != null && !canal.isEmpty()) {
+                sql.append(" AND canal = ?");
+                parametros.add(canal);
+            }
+            if (estado != null && !estado.isEmpty()) {
+                sql.append(" AND estado = ?");
+                parametros.add(estado);
+            }
+            if (contenido != null && !contenido.trim().isEmpty()) {
+                sql.append(" AND contenido LIKE ?");
+                parametros.add("%" + contenido + "%");
+            }
+            
+            sql.append(" ORDER BY enviado_at DESC");
+            
+            pstmt = conn.prepareStatement(sql.toString());
+            
+            for (int i = 0; i < parametros.size(); i++) {
+                pstmt.setObject(i + 1, parametros.get(i));
+            }
+            
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setTipo(rs.getString("tipo"));
+                notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
+                notificacion.setEstado(rs.getString("estado"));
+                notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
+                notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                notificaciones.add(notificacion);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return notificaciones;
+    }
+
+    // MÉTODO: Obtener notificaciones pendientes
+    public List<NotificacionClienteDTO> obtenerNotificacionesPendientes() {
+        List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+
+            String sql = "SELECT n.*, c.nombre, c.apellido " +
+                        "FROM notificacion n " +
+                        "LEFT JOIN cliente c ON n.destinatario_id = c.id_cliente " +
+                        "WHERE n.estado = 'pendiente' ORDER BY n.fecha_creacion DESC";
+            
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setIdNotificacion(rs.getInt("id_notificacion"));
+                notificacion.setTipo(rs.getString("tipo"));
+                notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setFechaCreacion(rs.getTimestamp("fecha_creacion"));
+                notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
+                notificacion.setEstado(rs.getString("estado"));
+                notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
+                notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                // Mapear datos del cliente del JOIN (pueden ser null para notificaciones del sistema)
+                notificacion.setNombreCliente(rs.getString("nombre"));
+                notificacion.setApellidoCliente(rs.getString("apellido"));
+                
+                notificaciones.add(notificacion);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return notificaciones;
+    }
+
+    // MÉTODO: Obtener notificaciones recientes
+    public List<NotificacionClienteDTO> obtenerNotificacionesRecientes(Integer limite) {
+        List<NotificacionClienteDTO> notificaciones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+
+            String sql = "SELECT * FROM notificacion ORDER BY enviado_at DESC";
+            if (limite != null && limite > 0) {
+                sql += " LIMIT ?";
+            }
+            
+            pstmt = conn.prepareStatement(sql);
+            
+            if (limite != null && limite > 0) {
+                pstmt.setInt(1, limite);
+            }
+            
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                NotificacionClienteDTO notificacion = new NotificacionClienteDTO();
+                notificacion.setTipo(rs.getString("tipo"));
+                notificacion.setContenido(rs.getString("contenido"));
+                notificacion.setEnviadoAt(rs.getTimestamp("enviado_at"));
+                notificacion.setEstado(rs.getString("estado"));
+                notificacion.setReferenciaTipo(rs.getString("referencia_tipo"));
+                notificacion.setReferenciaId(rs.getInt("referencia_id"));
+                
+                notificaciones.add(notificacion);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return notificaciones;
+    }
 }

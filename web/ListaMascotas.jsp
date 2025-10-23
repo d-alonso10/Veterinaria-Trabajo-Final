@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.util.List, modelo.MascotaBusquedaDTO"%>
+<%@page import="java.util.List, java.util.ArrayList"%>
+<%@page import="modelo.MascotaBusquedaDTO"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -987,7 +988,7 @@
 
                 <!-- Search Container -->
                 <div class="search-container">
-                    <form action="MascotaControlador" method="POST" id="searchForm">
+                    <form action="<%= request.getContextPath() %>/MascotaControlador" method="POST" id="searchForm">
                         <input type="hidden" name="accion" value="buscar">
                         <div class="search-form">
                             <div class="form-group">
@@ -1005,13 +1006,12 @@
                     </form>
                 </div>
 
-                <!-- Cargar todas las mascotas al inicio -->
+                <!-- Cargar mascotas desde el controlador -->
                 <%
-                    // Si no hay búsqueda activa, cargar todas las mascotas
+                    // ✅ PATRÓN MVC CORRECTO: Solo usar datos del controlador
                     List<MascotaBusquedaDTO> mascotas = (List<MascotaBusquedaDTO>) request.getAttribute("mascotas");
                     if (mascotas == null) {
-                        dao.MascotaDao dao = new dao.MascotaDao();
-                        mascotas = dao.buscarMascotas(""); // Cadena vacía para todas las mascotas
+                        mascotas = new ArrayList<>(); // Lista vacía si no hay datos
                     }
                 %>
 

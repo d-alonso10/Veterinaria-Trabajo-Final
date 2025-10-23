@@ -386,4 +386,188 @@ public class PromocionDao {
         
         System.out.println("\n✅ Método sp_ObtenerPromociones probado exitosamente");
     }
+
+    // MÉTODOS FALTANTES REQUERIDOS POR PromocionControlador según instrucciones de Diego
+
+    // Método renombrado para claridad
+    public List<Promocion> listarTodasPromociones() {
+        return obtenerPromociones(); // Reutiliza el método existente
+    }
+
+    // Búsqueda avanzada de promociones
+    public List<Promocion> buscarPromociones(String termino, String tipo, String estado, java.sql.Date fechaInicio, java.sql.Date fechaFin) {
+        List<Promocion> promociones = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        StringBuilder sql = new StringBuilder("SELECT * FROM promocion WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (termino != null && !termino.isEmpty()) {
+            sql.append(" AND (nombre LIKE ? OR descripcion LIKE ?)");
+            params.add("%" + termino + "%");
+            params.add("%" + termino + "%");
+        }
+        if (tipo != null && !tipo.isEmpty()) {
+            sql.append(" AND tipo = ?");
+            params.add(tipo);
+        }
+        if (estado != null && !estado.isEmpty()) {
+            sql.append(" AND estado = ?");
+            params.add(estado);
+        }
+        if (fechaInicio != null && fechaFin != null) {
+            sql.append(" AND fecha_inicio >= ? AND fecha_fin <= ?");
+            params.add(fechaInicio);
+            params.add(fechaFin);
+        }
+        sql.append(" ORDER BY fecha_inicio DESC");
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+            pstmt = conn.prepareStatement(sql.toString());
+
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Promocion p = new Promocion();
+                p.setIdPromocion(rs.getInt("id_promocion"));
+                p.setNombre(rs.getString("nombre"));
+                p.setDescripcion(rs.getString("descripcion"));
+                p.setTipo(rs.getString("tipo"));
+                p.setValor(rs.getDouble("valor"));
+                p.setFechaInicio(rs.getDate("fecha_inicio"));
+                p.setFechaFin(rs.getDate("fecha_fin"));
+                p.setEstado(rs.getString("estado"));
+                promociones.add(p);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al buscar promociones: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+        }
+        return promociones;
+    }
+
+    public Promocion obtenerPromocionPorId(int idPromocion) {
+        Promocion promocion = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String sql = "SELECT * FROM promocion WHERE id_promocion = ?";
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, idPromocion);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                promocion = new Promocion();
+                promocion.setIdPromocion(rs.getInt("id_promocion"));
+                promocion.setNombre(rs.getString("nombre"));
+                promocion.setDescripcion(rs.getString("descripcion"));
+                promocion.setTipo(rs.getString("tipo"));
+                promocion.setValor(rs.getDouble("valor"));
+                promocion.setFechaInicio(rs.getDate("fecha_inicio"));
+                promocion.setFechaFin(rs.getDate("fecha_fin"));
+                promocion.setEstado(rs.getString("estado"));
+            }
+        } catch (Exception e) {
+            System.err.println("Error al obtener promoción por ID: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+        }
+        return promocion;
+    }
+
+    public boolean actualizarPromocion(int idPromocion, String nombre, String descripcion, double valor) {
+        boolean exito = false;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        String sql = "UPDATE promocion SET nombre = ?, descripcion = ?, valor = ? WHERE id_promocion = ?";
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, nombre);
+            pstmt.setString(2, descripcion);
+            pstmt.setDouble(3, valor);
+            pstmt.setInt(4, idPromocion);
+            int filasAfectadas = pstmt.executeUpdate();
+            exito = filasAfectadas > 0;
+        } catch (Exception e) {
+            System.err.println("Error al actualizar promoción: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+        }
+        return exito;
+    }
+
+    public boolean cambiarEstadoPromocion(int idPromocion, String nuevoEstado) {
+        // Validar que nuevoEstado sea 'activa' o 'inactiva' antes de ejecutar
+        if (!"activa".equals(nuevoEstado) && !"inactiva".equals(nuevoEstado)) {
+            System.err.println("Estado inválido: " + nuevoEstado + ". Debe ser 'activa' o 'inactiva'");
+            return false;
+        }
+        return actualizarEstadoPromocion(idPromocion, nuevoEstado); // Reutiliza método existente
+    }
+
+    public boolean eliminarPromocion(int idPromocion) {
+        // En lugar de DELETE, cambiamos el estado a 'inactiva' para mantener historial
+        return cambiarEstadoPromocion(idPromocion, "inactiva");
+    }
+
+    // MÉTODOS ADICIONALES CON IMPLEMENTACIONES PLACEHOLDER
+    // Estos métodos requieren lógica más compleja o stored procedures no definidos
+
+    public int obtenerVecesUsadaPromocion(int idPromocion) {
+        // PLACEHOLDER: Necesitaría consultar tablas de facturas/detalles
+        System.err.println("WARN: obtenerVecesUsadaPromocion no implementado completamente, devolviendo 0.");
+        return 0;
+    }
+
+    public double obtenerMontoAhorradoPromocion(int idPromocion) {
+        // PLACEHOLDER: Necesitaría lógica de cálculo basada en usos
+        System.err.println("WARN: obtenerMontoAhorradoPromocion no implementado completamente, devolviendo 0.0.");
+        return 0.0;
+    }
+
+    public boolean validarPromocionParaCliente(int idPromocion, int idCliente, double montoCompra) {
+        // PLACEHOLDER: Lógica compleja (¿restricciones por cliente? ¿monto mínimo?)
+        System.err.println("WARN: validarPromocionParaCliente no implementado completamente, devolviendo true por defecto.");
+        return true; // Asumir válida por ahora
+    }
+
+    public double calcularDescuentoPromocion(Promocion promocion, double montoCompra) {
+        // Implementación básica de cálculo real
+        if (promocion != null && montoCompra > 0) {
+            if ("porcentaje".equalsIgnoreCase(promocion.getTipo())) {
+                return montoCompra * (promocion.getValor() / 100.0);
+            } else if ("monto".equalsIgnoreCase(promocion.getTipo())) {
+                return Math.min(promocion.getValor(), montoCompra);
+            }
+        }
+        return 0.0;
+    }
+
+    public String obtenerMotivoRechazoPromocion(int idPromocion, int idCliente, double montoCompra) {
+        // PLACEHOLDER: Lógica para determinar por qué falló validarPromocionParaCliente
+        System.err.println("WARN: obtenerMotivoRechazoPromocion no implementado completamente.");
+        return "Motivo desconocido (función no implementada)";
+    }
 }

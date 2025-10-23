@@ -76,6 +76,14 @@ public class UtilidadesControlador extends HttpServlet {
     private void mostrarPanelUtilidades(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("🎯 Mostrando panel de utilidades");
+        
+        // Verificar si viene de un recalculo exitoso
+        String recalculado = request.getParameter("recalculado");
+        if ("exito".equals(recalculado)) {
+            request.setAttribute("mensaje", "🧮 Recalculo de totales de facturas completado correctamente.");
+            request.setAttribute("tipoMensaje", "exito");
+        }
+        
         RequestDispatcher dispatcher = request.getRequestDispatcher("UtilidadesPanel.jsp");
         dispatcher.forward(request, response);
     }
@@ -154,8 +162,10 @@ public class UtilidadesControlador extends HttpServlet {
             boolean exito = utilidadesDao.recalcularTotalesFacturas();
 
             if (exito) {
-                request.setAttribute("mensaje", "🧮 Recalculo de totales de facturas completado correctamente.");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/UtilidadesControlador?accion=panel&recalculado=exito");
                 System.out.println("✅ Recalculo de facturas exitoso");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al recalcular los totales de facturas.");
                 System.out.println("❌ Error recalculando facturas");
