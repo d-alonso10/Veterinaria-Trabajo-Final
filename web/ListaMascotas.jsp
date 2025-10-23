@@ -987,7 +987,7 @@
 
                 <!-- Search Container -->
                 <div class="search-container">
-                    <form action="MascotaControlador" method="POST" id="searchForm">
+                    <form action="<%= request.getContextPath() %>/MascotaControlador" method="POST" id="searchForm">
                         <input type="hidden" name="accion" value="buscar">
                         <div class="search-form">
                             <div class="form-group">

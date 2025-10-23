@@ -359,19 +359,19 @@
                 <!-- Núcleo del Negocio -->
                 <div class="menu-section">Núcleo del Negocio</div>
                 <li class="menu-item active">
-                    <a href="Dashboard.jsp">
+                    <a href="<%= request.getContextPath() %>/Dashboard.jsp">
                         <span class="menu-icon">📊</span>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="CitaControlador?accion=todasCitas">
+                    <a href="<%= request.getContextPath() %>/CitaControlador?accion=todasCitas">
                         <span class="menu-icon">📅</span>
                         <span>Citas</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="AtencionControlador">
+                    <a href="<%= request.getContextPath() %>/AtencionControlador">
                         <span class="menu-icon">🎯</span>
                         <span>Atención</span>
                     </a>
@@ -557,7 +557,7 @@
             <!-- Filtros de Fecha -->
             <div class="date-filter">
                 <h3>🔍 Filtrar Métricas por Fecha</h3>
-                <form action="DashboardControlador" method="post" class="filter-form">
+                <form action="<%= request.getContextPath() %>/DashboardControlador" method="post" class="filter-form">
                     <input type="hidden" name="accion" value="metricasRango">
                     
                     <div class="form-group">
@@ -632,7 +632,7 @@
             <!-- Estadísticas Mensuales -->
             <div class="chart-container">
                 <h3 class="chart-title">📈 Estadísticas Mensuales</h3>
-                <form action="DashboardControlador" method="post" class="filter-form">
+                <form action="<%= request.getContextPath() %>/DashboardControlador" method="post" class="filter-form">
                     <input type="hidden" name="accion" value="estadisticasMensuales">
                     
                     <div class="form-group">

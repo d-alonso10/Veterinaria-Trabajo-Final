@@ -758,7 +758,7 @@
                     </div>
 
                     <div class="form-body">
-                        <form action="ServicioControlador" method="POST" id="servicioForm">
+                        <form action="<%= request.getContextPath() %>/ServicioControlador" method="POST" id="servicioForm">
                             <input type="hidden" name="acc" value="Confirmar">
                             
                             <div class="form-group">

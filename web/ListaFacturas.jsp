@@ -367,16 +367,16 @@
 
             <!-- Panel de Acciones -->
             <div class="actions-panel">
-                <a href="CrearFactura.jsp" class="btn btn-success">
+                <a href="<%= request.getContextPath() %>/CrearFactura.jsp" class="btn btn-success">
                     ➕ Nueva Factura
                 </a>
-                <a href="FacturaControlador?accion=listarTodas" class="btn btn-primary">
+                <a href="<%= request.getContextPath() %>/FacturaControlador?accion=listarTodas" class="btn btn-primary">
                     📋 Todas las Facturas
                 </a>
-                <a href="BuscarFacturas.jsp" class="btn btn-info">
+                <a href="<%= request.getContextPath() %>/BuscarFacturas.jsp" class="btn btn-info">
                     🔍 Búsqueda Avanzada
                 </a>
-                <a href="ReporteFacturas.jsp" class="btn btn-warning">
+                <a href="<%= request.getContextPath() %>/ReporteFacturas.jsp" class="btn btn-warning">
                     📊 Generar Reporte
                 </a>
             </div>
@@ -384,7 +384,7 @@
             <!-- Panel de Búsqueda -->
             <div class="search-panel">
                 <h3>🔍 Buscar Facturas</h3>
-                <form action="FacturaControlador" method="post" class="search-form">
+                <form action="<%= request.getContextPath() %>/FacturaControlador" method="post" class="search-form">
                     <input type="hidden" name="accion" value="buscarFacturas">
                     
                     <div class="form-group">

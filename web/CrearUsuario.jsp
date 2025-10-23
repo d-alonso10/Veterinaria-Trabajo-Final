@@ -546,8 +546,8 @@
                 </div>
             <% } %>
 
-            <form action="UsuarioSistemaControlador" method="post" id="formUsuario">
-                <input type="hidden" name="accion" value="registrar">
+            <form action="<%= request.getContextPath() %>/UsuarioSistemaControlador" method="post" id="formUsuario">
+                <input type="hidden" name="accion" value="crear">
                 
                 <!-- Información Personal -->
                 <div class="form-panel">
