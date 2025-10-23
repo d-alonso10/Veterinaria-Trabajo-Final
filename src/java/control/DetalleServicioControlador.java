@@ -44,11 +44,9 @@ public class DetalleServicioControlador extends HttpServlet {
                         buscarServiciosDisponibles(request, response);
                         break;
                     default:
-                        // Redirección segura con context path
                         response.sendRedirect(request.getContextPath() + "/ColaAtencion.jsp");
                 }
             } else {
-                 // Redirección segura con context path
                 response.sendRedirect(request.getContextPath() + "/ColaAtencion.jsp");
             }
         } catch (Exception e) {
@@ -62,8 +60,8 @@ public class DetalleServicioControlador extends HttpServlet {
     private void agregarServicioAtencion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String vistaError = "CrearAtencionDesdeCita.jsp"; // Vista del formulario para mostrar errores
-        int idAtencion = 0; // Para la redirección
+        String vistaError = "CrearAtencionDesdeCita.jsp";
+        int idAtencion = 0;
         
         try {
             // Obtener y validar parámetros
@@ -97,11 +95,20 @@ public class DetalleServicioControlador extends HttpServlet {
                 // Si no se proporciona precio, obtenerlo del servicio
                 if (precioUnitarioStr.isEmpty()) {
                     ServicioDao servicioDao = new ServicioDao();
-                    Servicio servicio = servicioDao.obtenerServicioPorId(idServicio);
-                    if (servicio != null) {
-                        // ****** INICIO DE CORRECCIÓN (BUG) ******
-                        precioUnitario = servicio.getPrecio_base(); // El método correcto es getPrecio_base()
-                        // ****** FIN DE CORRECCIÓN (BUG) ******
+                    List<Servicio> servicios = servicioDao.obtenerServicios();
+                    Servicio servicioEncontrado = null;
+                    
+                    // Buscar el servicio por ID en la lista
+                    for (Servicio servicio : servicios) {
+                        if (servicio.getIdServicio() == idServicio) {
+                            servicioEncontrado = servicio;
+                            break;
+                        }
+                    }
+                    
+                    if (servicioEncontrado != null) {
+                        // CORRECCIÓN: Usar getPrecioBase() en lugar de getPrecio_base()
+                        precioUnitario = servicioEncontrado.getPrecioBase();
                     } else {
                         throw new Exception("Servicio no encontrado con ID: " + idServicio);
                     }
@@ -134,11 +141,6 @@ public class DetalleServicioControlador extends HttpServlet {
             detalle.setIdServicio(idServicio);
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(precioUnitario);
-            
-            // ****** INICIO CORRECCIÓN COHERENCIA (Observación) ******
-            detalle.setSubtotal(cantidad * precioUnitario); // Calcular subtotal para el objeto
-            // ****** FIN CORRECCIÓN COHERENCIA ******
-            
             detalle.setDescuentoId(descuentoId);
             detalle.setObservaciones(observaciones);
 
@@ -147,23 +149,18 @@ public class DetalleServicioControlador extends HttpServlet {
             boolean exito = dao.agregarServicioAtencion(detalle);
 
             if (exito) {
-                // ****** INICIO DE CORRECCIÓN PRG ******
-                // Redirige a la lista de detalles de esa atención
                 response.sendRedirect(request.getContextPath() + "/DetalleServicioControlador?accion=listar&idAtencion=" + idAtencion + "&agregado=exito");
-                return; // Importante
-                // ****** FIN DE CORRECCIÓN PRG ******
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al agregar el servicio a la atención");
             }
 
         } catch (Exception e) {
-            // Si el error ocurre, intentar mostrar el error en el formulario original
             request.setAttribute("mensaje", "❌ Error al agregar servicio: " + e.getMessage());
             request.getRequestDispatcher(vistaError).forward(request, response);
             return;
         }
 
-        // Forward solo si la inserción falló (exito == false)
         request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
@@ -184,7 +181,7 @@ public class DetalleServicioControlador extends HttpServlet {
                 return;
             }
             
-            // ****** INICIO CORRECCIÓN (Manejar mensajes PRG) ******
+            // Manejar mensajes PRG
             if ("exito".equals(request.getParameter("agregado"))) {
                 request.setAttribute("mensaje", "✅ Servicio agregado exitosamente.");
                 request.setAttribute("tipoMensaje", "exito");
@@ -195,10 +192,9 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.setAttribute("mensaje", "✅ Detalle de servicio actualizado exitosamente.");
                 request.setAttribute("tipoMensaje", "exito");
             }
-            // ****** FIN CORRECCIÓN ******
 
             int idAtencion = Integer.parseInt(idAtencionStr);
-            listarDetallesAtencionInterno(request, idAtencion); // Carga los datos en el request
+            listarDetallesAtencionInterno(request, idAtencion);
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de atención inválido");
@@ -234,7 +230,7 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.setAttribute("detallesServicios", null);
                 request.setAttribute("totalServicios", 0);
                 request.setAttribute("totalAtencion", 0.0);
-                if (request.getAttribute("mensaje") == null) { // No sobreescribir mensajes de éxito/error
+                if (request.getAttribute("mensaje") == null) {
                     request.setAttribute("mensaje", "ℹ️ No hay servicios registrados para esta atención");
                 }
             }
@@ -253,9 +249,9 @@ public class DetalleServicioControlador extends HttpServlet {
     private void eliminarDetalleServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String idAtencionStr = limpiarParametro(request.getParameter("idAtencion")); // Capturar para la redirección
+        String idAtencionStr = limpiarParametro(request.getParameter("idAtencion"));
         int idAtencion = 0;
-        String vistaError = "DetalleServiciosAtencion.jsp"; // Volver a la lista en caso de error
+        String vistaError = "DetalleServiciosAtencion.jsp";
         
         try {
             String idDetalleStr = limpiarParametro(request.getParameter("idDetalle"));
@@ -273,10 +269,8 @@ public class DetalleServicioControlador extends HttpServlet {
             boolean exito = dao.eliminarDetalleServicio(idDetalle);
 
             if (exito) {
-                // ****** INICIO DE CORRECCIÓN PRG ******
                 response.sendRedirect(request.getContextPath() + "/DetalleServicioControlador?accion=listar&idAtencion=" + idAtencion + "&eliminado=exito");
-                return; // Importante
-                // ****** FIN DE CORRECCIÓN PRG ******
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al eliminar el servicio de la atención");
             }
@@ -288,8 +282,7 @@ public class DetalleServicioControlador extends HttpServlet {
             return;
         }
 
-        // Forward solo si falla la eliminación (exito == false)
-        listarDetallesAtencionInterno(request, idAtencion); // Recargar datos para la vista de error
+        listarDetallesAtencionInterno(request, idAtencion);
         request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
@@ -299,21 +292,22 @@ public class DetalleServicioControlador extends HttpServlet {
     private void actualizarDetalleServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String idAtencionStr = limpiarParametro(request.getParameter("idAtencion")); // Capturar para redirección
+        String idAtencionStr = limpiarParametro(request.getParameter("idAtencion"));
         int idAtencion = 0;
-        String vistaError = "DetalleServiciosAtencion.jsp"; // Volver a la lista en caso de error
+        String vistaError = "DetalleServiciosAtencion.jsp";
 
         try {
             String idDetalleStr = limpiarParametro(request.getParameter("idDetalle"));
             String cantidadStr = limpiarParametro(request.getParameter("cantidad"));
             String precioUnitarioStr = limpiarParametro(request.getParameter("precioUnitario"));
             String observaciones = limpiarParametro(request.getParameter("observaciones"));
-            
 
             // Validaciones básicas
             if (idDetalleStr.isEmpty() || cantidadStr.isEmpty() || precioUnitarioStr.isEmpty() || idAtencionStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ ID detalle, ID atención, cantidad y precio son obligatorios");
-                listarDetallesAtencionInterno(request, Integer.parseInt(idAtencionStr)); // Recargar datos antes del forward
+                if (!idAtencionStr.isEmpty()) {
+                    listarDetallesAtencionInterno(request, Integer.parseInt(idAtencionStr));
+                }
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
@@ -327,7 +321,7 @@ public class DetalleServicioControlador extends HttpServlet {
             // Validaciones de negocio
             if (cantidad <= 0 || precioUnitario < 0) {
                 request.setAttribute("mensaje", "❌ Cantidad debe ser mayor a 0 y precio no negativo");
-                listarDetallesAtencionInterno(request, idAtencion); // Recargar datos antes del forward
+                listarDetallesAtencionInterno(request, idAtencion);
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
@@ -336,24 +330,21 @@ public class DetalleServicioControlador extends HttpServlet {
             boolean exito = dao.actualizarDetalleServicio(idDetalle, cantidad, precioUnitario, observaciones);
 
             if (exito) {
-                // ****** INICIO DE CORRECCIÓN PRG ******
                 response.sendRedirect(request.getContextPath() + "/DetalleServicioControlador?accion=listar&idAtencion=" + idAtencion + "&actualizado=exito");
-                return; // Importante
-                // ****** FIN DE CORRECCIÓN PRG ******
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar el detalle de servicio");
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Datos numéricos inválidos");
-            if (idAtencion > 0) listarDetallesAtencionInterno(request, idAtencion); // Recargar si es posible
+            if (idAtencion > 0) listarDetallesAtencionInterno(request, idAtencion);
         } catch (Exception e) {
             manejarError(request, response, e, "Error al actualizar detalle de servicio");
             return;
         }
 
-        // Forward solo si falla la actualización (exito == false)
-        if (idAtencion > 0) listarDetallesAtencionInterno(request, idAtencion); // Recargar datos para la vista de error
+        if (idAtencion > 0) listarDetallesAtencionInterno(request, idAtencion);
         request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
@@ -364,24 +355,43 @@ public class DetalleServicioControlador extends HttpServlet {
             throws ServletException, IOException {
         try {
             String termino = limpiarParametro(request.getParameter("termino"));
+            String categoria = limpiarParametro(request.getParameter("categoria"));
 
             ServicioDao servicioDao = new ServicioDao();
             List<Servicio> servicios;
 
-            if (termino.isEmpty()) {
-                servicios = servicioDao.listarServicios();
+            if (!termino.isEmpty()) {
+                // CORRECCIÓN: El DAO no tiene método buscarServicios, usar obtenerServicios y filtrar
+                servicios = servicioDao.obtenerServicios();
+                // Filtrar por término si es necesario (implementación básica)
+                if (!termino.isEmpty()) {
+                    List<Servicio> serviciosFiltrados = new java.util.ArrayList<>();
+                    String terminoLower = termino.toLowerCase();
+                    for (Servicio servicio : servicios) {
+                        if (servicio.getNombre().toLowerCase().contains(terminoLower) ||
+                            servicio.getDescripcion().toLowerCase().contains(terminoLower) ||
+                            servicio.getCodigo().toLowerCase().contains(terminoLower)) {
+                            serviciosFiltrados.add(servicio);
+                        }
+                    }
+                    servicios = serviciosFiltrados;
+                }
+            } else if (!categoria.isEmpty()) {
+                // CORRECCIÓN: Usar obtenerServiciosPorCategoria si se proporciona categoría
+                servicios = servicioDao.obtenerServiciosPorCategoria(categoria);
             } else {
-                servicios = servicioDao.buscarServicios(termino);
+                servicios = servicioDao.obtenerServicios();
             }
 
             request.setAttribute("serviciosDisponibles", servicios);
             request.setAttribute("terminoBusqueda", termino);
+            request.setAttribute("categoriaBusqueda", categoria);
 
             if (servicios != null && !servicios.isEmpty()) {
                 request.setAttribute("totalServicios", servicios.size());
                 request.setAttribute("mensaje", "✅ Se encontraron " + servicios.size() + " servicios");
             } else {
-                request.setAttribute("mensaje", "ℹ️ No se encontraron servicios con el término especificado");
+                request.setAttribute("mensaje", "ℹ️ No se encontraron servicios con los criterios especificados");
             }
 
         } catch (Exception e) {
@@ -407,7 +417,6 @@ public class DetalleServicioControlador extends HttpServlet {
         request.setAttribute("mensaje", "❌ " + mensajeContexto + ": " + e.getMessage());
         request.setAttribute("tipoMensaje", "error");
         
-        // Redirigir a una vista genérica o de cola, ya que el error puede ser grave
         request.getRequestDispatcher("ColaAtencion.jsp").forward(request, response);
     }
 

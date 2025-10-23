@@ -2,9 +2,9 @@ package control;
 
 import dao.FacturaDao;
 import dao.ClienteDao;
-import dao.ServicioDao; // Aunque no se usa directamente en los métodos corregidos, es bueno mantenerlo para mostrarFormularioCreacion
+import dao.ServicioDao;
 import modelo.Factura;
-import modelo.FacturaClienteDTO; // Importar el DTO
+import modelo.FacturaClienteDTO;
 import modelo.Cliente;
 import modelo.Servicio;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public class FacturaControlador extends HttpServlet {
     private void crearFactura(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String vistaError = "CrearFactura.jsp"; // Vista para mostrar errores
+        String vistaError = "CrearFactura.jsp";
         
         try {
             // Obtener parámetros
@@ -91,7 +91,7 @@ public class FacturaControlador extends HttpServlet {
             }
 
             // Validar formato de serie y número
-            if (!serieStr.matches("[A-Z0-9]{1,4}")) { // Permitir números en serie (ej. F001)
+            if (!serieStr.matches("[A-Z0-9]{1,4}")) {
                 request.setAttribute("mensaje", "❌ Serie debe contener letras mayúsculas o números (1-4 caracteres)");
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
@@ -116,16 +116,15 @@ public class FacturaControlador extends HttpServlet {
                 return;
             }
 
-            // Validar método de pago (usando los valores de la BD)
+            // Validar método de pago
             if (metodoPago.isEmpty()) {
-                metodoPago = "efectivo"; // Valor por defecto
+                metodoPago = "efectivo";
             }
-            // Lista de métodos válidos según el ENUM de la BD
             String[] metodosValidos = {"efectivo", "tarjeta", "transfer", "otro"};
             boolean metodovalido = false;
             for (String metodo : metodosValidos) {
-                if (metodo.equalsIgnoreCase(metodoPago)) { // Usar equalsIgnoreCase
-                    metodoPago = metodo; // Asignar el valor limpio
+                if (metodo.equalsIgnoreCase(metodoPago)) {
+                    metodoPago = metodo;
                     metodovalido = true;
                     break;
                 }
@@ -135,7 +134,6 @@ public class FacturaControlador extends HttpServlet {
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
-
 
             // Crear objeto Factura
             Factura factura = new Factura();
@@ -149,7 +147,6 @@ public class FacturaControlador extends HttpServlet {
             boolean exito = dao.crearFactura(factura);
 
             if (exito) {
-                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
                 response.sendRedirect(request.getContextPath() + "/FacturaControlador?accion=listar&creada=exito&serie=" + serieStr + "&numero=" + numeroStr);
                 return;
             } else {
@@ -162,7 +159,6 @@ public class FacturaControlador extends HttpServlet {
              request.setAttribute("tipoMensaje", "error");
         }
 
-        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
         request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
@@ -172,7 +168,7 @@ public class FacturaControlador extends HttpServlet {
     private void listarFacturasPorCliente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String vistaDestino = "FacturasPorCliente.jsp"; // Vista para mostrar los resultados
+        String vistaDestino = "FacturasPorCliente.jsp";
         
         try {
             String idClienteStr = limpiarParametro(request.getParameter("idCliente"));
@@ -187,25 +183,28 @@ public class FacturaControlador extends HttpServlet {
 
             FacturaDao dao = new FacturaDao();
             
-            // ****** INICIO DE CORRECCIÓN (Coherencia DAO/Modelo) ******
-            // Usar FacturaClienteDTO para obtener también los datos del cliente
-            List<FacturaClienteDTO> facturas = dao.obtenerFacturasPorCliente(idCliente);
-            // ****** FIN DE CORRECCIÓN ******
+            // CORRECCIÓN: El DAO devuelve List<Factura>, no List<FacturaClienteDTO>
+            List<Factura> facturas = dao.obtenerFacturasPorCliente(idCliente);
 
             if (facturas != null && !facturas.isEmpty()) {
-                request.setAttribute("facturas", facturas); // Ahora es List<FacturaClienteDTO>
+                request.setAttribute("facturas", facturas);
                 request.setAttribute("totalFacturas", facturas.size());
                 request.setAttribute("idClienteConsulta", idCliente);
 
                 // Calcular totales
                 double totalFacturado = 0.0;
-                for (FacturaClienteDTO factura : facturas) { // Iterar sobre DTO
+                for (Factura factura : facturas) {
                     totalFacturado += factura.getTotal();
                 }
                 request.setAttribute("totalFacturado", totalFacturado);
 
-                // Obtener datos del cliente (ya vienen en el DTO, pero podemos tomar el primero)
-                request.setAttribute("nombreCliente", facturas.get(0).getNombreCliente() + " " + facturas.get(0).getApellidoCliente());
+                // Obtener datos del cliente
+                ClienteDao clienteDao = new ClienteDao();
+                Cliente cliente = clienteDao.obtenerClientePorId(idCliente);
+                if (cliente != null) {
+                    request.setAttribute("nombreCliente", cliente.getNombre() + " " + cliente.getApellido());
+                    request.setAttribute("clienteInfo", cliente);
+                }
 
                 request.setAttribute("mensaje", "✅ Se encontraron " + facturas.size() + " facturas");
             } else {
@@ -238,7 +237,7 @@ public class FacturaControlador extends HttpServlet {
     private void buscarFacturas(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String vistaDestino = "BuscarFacturas.jsp"; // La misma vista muestra el formulario y los resultados
+        String vistaDestino = "BuscarFacturas.jsp";
         
         try {
             String termino = limpiarParametro(request.getParameter("termino"));
@@ -254,9 +253,8 @@ public class FacturaControlador extends HttpServlet {
                 facturas = dao.buscarFacturas(termino);
             } else if (!fechaInicioStr.isEmpty() && !fechaFinStr.isEmpty()) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                // Ajustar para incluir el día completo en la fecha fin
                 Timestamp fechaInicio = new Timestamp(sdf.parse(fechaInicioStr).getTime());
-                Timestamp fechaFin = new Timestamp(sdf.parse(fechaFinStr).getTime() + (24 * 60 * 60 * 1000 - 1)); // +23:59:59.999
+                Timestamp fechaFin = new Timestamp(sdf.parse(fechaFinStr).getTime() + (24 * 60 * 60 * 1000 - 1));
                 
                 if (fechaInicio.after(fechaFin)) {
                     request.setAttribute("mensaje", "❌ La fecha de inicio no puede ser mayor que la fecha fin");
@@ -264,11 +262,15 @@ public class FacturaControlador extends HttpServlet {
                     return;
                 }
                 
-                facturas = dao.obtenerFacturasPorFecha(fechaInicio, fechaFin);
+                // CORRECCIÓN: El DAO devuelve List<Factura> para este método
+                List<Factura> facturasTemp = dao.obtenerFacturasPorFecha(fechaInicio, fechaFin);
+                // Convertir a DTO para consistencia
+                facturas = convertirFacturasADTO(facturasTemp);
             } else if (!estado.isEmpty()) {
-                facturas = dao.obtenerFacturasPorEstado(estado);
+                // CORRECCIÓN: El DAO devuelve List<Factura> para este método
+                List<Factura> facturasTemp = dao.obtenerFacturasPorEstado(estado);
+                facturas = convertirFacturasADTO(facturasTemp);
             } else {
-                // No listar todas por defecto en una búsqueda, mejor pedir criterios
                 request.setAttribute("mensaje", "ℹ️ Ingrese un término, rango de fechas o estado para buscar.");
                 request.getRequestDispatcher(vistaDestino).forward(request, response);
                 return;
@@ -280,12 +282,12 @@ public class FacturaControlador extends HttpServlet {
 
                 // Calcular estadísticas
                 double totalFacturado = 0.0;
-                int facturasEmitidas = 0; // Cambiado de "pagadas"
-                int facturasAnuladas = 0; // Cambiado de "pendientes"
+                int facturasEmitidas = 0;
+                int facturasAnuladas = 0;
 
                 for (FacturaClienteDTO factura : facturas) {
                     if ("emitida".equalsIgnoreCase(factura.getEstado())) {
-                         totalFacturado += factura.getTotal(); // Solo sumar las emitidas
+                         totalFacturado += factura.getTotal();
                          facturasEmitidas++;
                     } else if ("anulada".equalsIgnoreCase(factura.getEstado())) {
                         facturasAnuladas++;
@@ -335,12 +337,13 @@ public class FacturaControlador extends HttpServlet {
             int idFactura = Integer.parseInt(idFacturaStr);
 
             FacturaDao dao = new FacturaDao();
-            FacturaClienteDTO factura = dao.obtenerFacturaPorId(idFactura); // Usar DTO
+            // CORRECCIÓN: El DAO devuelve Factura, no FacturaClienteDTO
+            Factura factura = dao.obtenerFacturaPorId(idFactura);
 
             if (factura != null) {
-                request.setAttribute("facturaDetalle", factura);
-                // Cargar también los detalles de servicios y pagos si es necesario para esta vista
-                // ... (llamar a DetalleServicioDao y PagoDao)
+                // Convertir a DTO para la vista si es necesario
+                FacturaClienteDTO facturaDTO = convertirFacturaADTO(factura);
+                request.setAttribute("facturaDetalle", facturaDTO);
                 request.setAttribute("mensaje", "✅ Detalle de factura cargado");
             } else {
                 request.setAttribute("mensaje", "❌ Factura no encontrada");
@@ -365,10 +368,10 @@ public class FacturaControlador extends HttpServlet {
             throws ServletException, IOException {
         
         String idFacturaStr = limpiarParametro(request.getParameter("idFactura"));
-        String vistaError = "DetalleFactura.jsp"; // Volver al detalle si falla
+        String vistaError = "DetalleFactura.jsp";
         
         try {
-            String motivo = limpiarParametro(request.getParameter("motivo")); // Motivo es opcional en el DAO actual
+            String motivo = limpiarParametro(request.getParameter("motivo"));
 
             if (idFacturaStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ ID de factura requerido");
@@ -376,28 +379,23 @@ public class FacturaControlador extends HttpServlet {
                 return;
             }
 
-            // (Opcional) Validación de motivo si se hace obligatorio
-            // if (motivo.isEmpty()) {
-            //     request.setAttribute("mensaje", "❌ Motivo de anulación es obligatorio");
-            //     request.getRequestDispatcher(vistaError).forward(request, response);
-            //     return;
-            // }
-
             int idFactura = Integer.parseInt(idFacturaStr);
 
             FacturaDao dao = new FacturaDao();
-            boolean exito = dao.anularFactura(idFactura, motivo); // Pasar motivo
+            boolean exito = dao.anularFactura(idFactura, motivo);
 
             if (exito) {
-                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
                 response.sendRedirect(request.getContextPath() + "/FacturaControlador?accion=listar&anulada=exito&id=" + idFactura);
                 return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al anular la factura (quizás ya estaba anulada)");
                 request.setAttribute("tipoMensaje", "error");
                 // Recargar datos para la vista de error
-                FacturaClienteDTO factura = dao.obtenerFacturaPorId(idFactura);
-                request.setAttribute("facturaDetalle", factura);
+                Factura factura = dao.obtenerFacturaPorId(idFactura);
+                if (factura != null) {
+                    FacturaClienteDTO facturaDTO = convertirFacturaADTO(factura);
+                    request.setAttribute("facturaDetalle", facturaDTO);
+                }
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
@@ -421,7 +419,7 @@ public class FacturaControlador extends HttpServlet {
         String vistaDestino = "ListaFacturas.jsp";
         
         try {
-            // ****** INICIO CORRECCIÓN (Manejar mensajes PRG) ******
+            // Manejar mensajes PRG
             String creada = request.getParameter("creada");
             String anulada = request.getParameter("anulada");
             String idParam = request.getParameter("id");
@@ -436,13 +434,15 @@ public class FacturaControlador extends HttpServlet {
                 request.setAttribute("mensaje", "✅ Factura ID " + idParam + " anulada exitosamente.");
                 request.setAttribute("tipoMensaje", "exito");
             }
-            // ****** FIN CORRECCIÓN ******
 
             FacturaDao dao = new FacturaDao();
-            List<FacturaClienteDTO> facturas = dao.listarTodasFacturas();
+            // CORRECCIÓN: El DAO devuelve List<Factura>
+            List<Factura> facturas = dao.listarTodasFacturas();
 
             if (facturas != null && !facturas.isEmpty()) {
-                request.setAttribute("facturas", facturas);
+                // Convertir a DTO para la vista
+                List<FacturaClienteDTO> facturasDTO = convertirFacturasADTO(facturas);
+                request.setAttribute("facturas", facturasDTO);
                 request.setAttribute("totalFacturas", facturas.size());
 
                 // Estadísticas generales
@@ -450,7 +450,7 @@ public class FacturaControlador extends HttpServlet {
                 int facturasEmitidas = 0;
                 int facturasAnuladas = 0;
                 
-                for (FacturaClienteDTO factura : facturas) {
+                for (FacturaClienteDTO factura : facturasDTO) {
                     if ("emitida".equalsIgnoreCase(factura.getEstado())) {
                         totalFacturado += factura.getTotal();
                         facturasEmitidas++;
@@ -462,7 +462,7 @@ public class FacturaControlador extends HttpServlet {
                 request.setAttribute("facturasEmitidas", facturasEmitidas);
                 request.setAttribute("facturasAnuladas", facturasAnuladas);
                 
-                if (request.getAttribute("mensaje") == null) { // No sobreescribir mensajes de éxito
+                if (request.getAttribute("mensaje") == null) {
                     request.setAttribute("mensaje", "✅ Listado completo de facturas cargado");
                 }
             } else {
@@ -481,6 +481,42 @@ public class FacturaControlador extends HttpServlet {
     }
 
     /**
+     * Métodos auxiliares para conversión entre Factura y FacturaClienteDTO
+     */
+    private FacturaClienteDTO convertirFacturaADTO(Factura factura) {
+        if (factura == null) return null;
+        
+        FacturaClienteDTO dto = new FacturaClienteDTO();
+        dto.setIdFactura(factura.getIdFactura());
+        dto.setSerie(factura.getSerie());
+        dto.setNumero(factura.getNumero());
+        dto.setIdCliente(factura.getIdCliente());
+        dto.setIdAtencion(factura.getIdAtencion());
+        dto.setFechaEmision(factura.getFechaEmision());
+        dto.setSubtotal(factura.getSubtotal());
+        dto.setImpuesto(factura.getImpuesto());
+        dto.setDescuentoTotal(factura.getDescuentoTotal());
+        dto.setTotal(factura.getTotal());
+        dto.setEstado(factura.getEstado());
+        dto.setMetodoPagoSugerido(factura.getMetodoPagoSugerido());
+        
+        // Los campos de cliente no están disponibles en Factura, se dejan null
+        // Se pueden cargar posteriormente si es necesario
+        
+        return dto;
+    }
+    
+    private List<FacturaClienteDTO> convertirFacturasADTO(List<Factura> facturas) {
+        if (facturas == null) return null;
+        
+        List<FacturaClienteDTO> dtos = new java.util.ArrayList<>();
+        for (Factura factura : facturas) {
+            dtos.add(convertirFacturaADTO(factura));
+        }
+        return dtos;
+    }
+
+    /**
      * Manejo centralizado de errores
      */
     private void manejarError(HttpServletRequest request, HttpServletResponse response, 
@@ -495,7 +531,6 @@ public class FacturaControlador extends HttpServlet {
         request.setAttribute("mensaje", "❌ " + mensajeContexto + ": " + e.getMessage());
         request.setAttribute("tipoMensaje", "error");
         
-        // Redirigir a una vista principal o de error
         request.getRequestDispatcher("ListaFacturas.jsp").forward(request, response);
     }
 
@@ -507,20 +542,13 @@ public class FacturaControlador extends HttpServlet {
         try {
             // Cargar clientes para el formulario
             ClienteDao clienteDao = new ClienteDao();
-            List<Cliente> clientes = clienteDao.buscarClientes(""); // Asume que buscar con "" lista todos
+            List<Cliente> clientes = clienteDao.listarTodosClientes();
             request.setAttribute("clientes", clientes);
             
             // Cargar servicios para el formulario
             ServicioDao servicioDao = new ServicioDao();
-            List<Servicio> servicios = servicioDao.obtenerServicios(); // Asume que este método existe
+            List<Servicio> servicios = servicioDao.obtenerServicios();
             request.setAttribute("servicios", servicios);
-            
-            // Cargar atenciones pendientes de facturar (¡NUEVO!)
-            // Esto es crucial para el formulario
-            // Necesitarías un AtencionDao.listarAtencionesPendientesDeFactura()
-            // AtencionDao atencionDao = new AtencionDao();
-            // List<Atencion> atenciones = atencionDao.listarAtencionesPendientesDeFactura();
-            // request.setAttribute("atenciones", atenciones);
             
             request.getRequestDispatcher("/CrearFactura.jsp").forward(request, response);
         } catch (Exception e) {

@@ -1009,31 +1009,8 @@
             </div>
 
             <div class="main-content">
-                <!-- Mensaje de éxito/error -->
-                <% if (mensaje != null && !mensaje.isEmpty()) { %>
-                    <div class="alert <%= "exito".equals(tipoMensaje) ? "alert-success" : "alert-error" %>">
-                        <%= mensaje %>
-                    </div>
-                <% } %>
-
-                <div class="search-box">
-                    <form action="<%= request.getContextPath() %>/ClienteControlador" method="POST" class="search-form" id="searchForm">
-                        <input type="hidden" name="accion" value="buscar">
-                        <input type="text" name="termino" placeholder="🔍 Buscar por nombre, apellido, DNI, email..." 
-                               class="search-input" id="searchInput"
-                               value="<%= request.getParameter("termino") != null ? request.getParameter("termino") : "" %>">
-                        <button type="submit" class="btn btn-primary">
-                            <span>Buscar Clientes</span>
-                        </button>
-                        <% if (request.getParameter("termino") != null && !request.getParameter("termino").isEmpty()) { %>
-                            <a href="<%= request.getContextPath() %>/ClienteControlador" class="btn btn-secondary">
-                                <span>🔄 Limpiar</span>
-                            </a>
-                        <% } %>
-                    </form>
-                </div>
-
                 <%
+                    // ✅ DECLARAR LAS VARIABLES AL INICIO - CORRECCIÓN DEL ERROR
                     List<Cliente> clientes = (List<Cliente>) request.getAttribute("clientes");
                     Integer totalClientes = (Integer) request.getAttribute("totalClientes");
                     
@@ -1061,6 +1038,30 @@
                         }
                     }
                 %>
+
+                <!-- Mensaje de éxito/error -->
+                <% if (mensaje != null && !mensaje.isEmpty()) { %>
+                    <div class="alert <%= "exito".equals(tipoMensaje) ? "alert-success" : "alert-error" %>">
+                        <%= mensaje %>
+                    </div>
+                <% } %>
+
+                <div class="search-box">
+                    <form action="<%= request.getContextPath() %>/ClienteControlador" method="POST" class="search-form" id="searchForm">
+                        <input type="hidden" name="accion" value="buscar">
+                        <input type="text" name="termino" placeholder="🔍 Buscar por nombre, apellido, DNI, email..." 
+                               class="search-input" id="searchInput"
+                               value="<%= request.getParameter("termino") != null ? request.getParameter("termino") : "" %>">
+                        <button type="submit" class="btn btn-primary">
+                            <span>Buscar Clientes</span>
+                        </button>
+                        <% if (request.getParameter("termino") != null && !request.getParameter("termino").isEmpty()) { %>
+                            <a href="<%= request.getContextPath() %>/ClienteControlador" class="btn btn-secondary">
+                                <span>🔄 Limpiar</span>
+                            </a>
+                        <% } %>
+                    </form>
+                </div>
 
                 <!-- Estadísticas mejoradas -->
                 <div class="stats-container">

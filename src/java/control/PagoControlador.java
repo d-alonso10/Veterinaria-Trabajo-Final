@@ -3,11 +3,9 @@ package control;
 import dao.PagoDao;
 import dao.FacturaDao;
 import modelo.Pago;
-import modelo.PagoFacturaDTO;
 import modelo.Factura;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.sql.Date;
 import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -21,7 +19,6 @@ public class PagoControlador extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Configurar encoding
         request.setCharacterEncoding("UTF-8");
         response.setContentType("text/html;charset=UTF-8");
 
@@ -62,26 +59,20 @@ public class PagoControlador extends HttpServlet {
         }
     }
 
-    /**
-     * Registra un nuevo pago para una factura
-     */
     private void registrarPago(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            // Obtener parámetros
             String idFacturaStr = limpiarParametro(request.getParameter("idFactura"));
             String montoStr = limpiarParametro(request.getParameter("monto"));
             String metodo = limpiarParametro(request.getParameter("metodo"));
             String referencia = limpiarParametro(request.getParameter("referencia"));
 
-            // Validaciones básicas
             if (idFacturaStr.isEmpty() || montoStr.isEmpty() || metodo.isEmpty()) {
                 request.setAttribute("mensaje", "❌ Factura, monto y método de pago son obligatorios");
                 request.getRequestDispatcher("RegistrarPago.jsp").forward(request, response);
                 return;
             }
 
-            // Conversiones numéricas
             int idFactura;
             double monto;
 
@@ -96,7 +87,6 @@ public class PagoControlador extends HttpServlet {
                     throw new NumberFormatException("Monto debe ser positivo");
                 }
 
-                // Validar límite de monto (ejemplo: hasta $50,000)
                 if (monto > 50000.00) {
                     request.setAttribute("mensaje", "❌ El monto no puede exceder $50,000.00");
                     request.getRequestDispatcher("RegistrarPago.jsp").forward(request, response);
@@ -109,11 +99,11 @@ public class PagoControlador extends HttpServlet {
                 return;
             }
 
-            // Validar métodos de pago permitidos
-            String[] metodosPermitidos = {"EFECTIVO", "TARJETA_CREDITO", "TARJETA_DEBITO", "TRANSFERENCIA", "CHEQUE", "PAYPAL", "YAPE", "PLIN"};
+            // CORRECCIÓN: Métodos de pago según el DAO (en minúsculas)
+            String[] metodosPermitidos = {"efectivo", "tarjeta_credito", "tarjeta_debito", "transferencia", "cheque", "paypal", "yape", "plin"};
             boolean metodoValido = false;
             for (String metodoPermitido : metodosPermitidos) {
-                if (metodoPermitido.equals(metodo.toUpperCase())) {
+                if (metodoPermitido.equals(metodo.toLowerCase())) {
                     metodo = metodoPermitido;
                     metodoValido = true;
                     break;
@@ -126,14 +116,13 @@ public class PagoControlador extends HttpServlet {
                 return;
             }
 
-            // Validar referencia según método de pago
-            if (("TRANSFERENCIA".equals(metodo) || "CHEQUE".equals(metodo)) && referencia.isEmpty()) {
+            if (("transferencia".equals(metodo) || "cheque".equals(metodo)) && referencia.isEmpty()) {
                 request.setAttribute("mensaje", "❌ Referencia es obligatoria para " + metodo);
                 request.getRequestDispatcher("RegistrarPago.jsp").forward(request, response);
                 return;
             }
 
-            // Validar que la factura existe y está pendiente
+            // CORRECCIÓN: Verificar que la factura existe
             FacturaDao facturaDao = new FacturaDao();
             Factura factura = facturaDao.obtenerFacturaPorId(idFactura);
             if (factura == null) {
@@ -142,7 +131,8 @@ public class PagoControlador extends HttpServlet {
                 return;
             }
 
-            if ("ANULADA".equals(factura.getEstado()) || "PAGADA".equals(factura.getEstado())) {
+            // CORRECCIÓN: Estados según el DAO
+            if ("anulada".equals(factura.getEstado()) || "pagada".equals(factura.getEstado())) {
                 request.setAttribute("mensaje", "❌ No se pueden registrar pagos para facturas " + factura.getEstado().toLowerCase());
                 request.getRequestDispatcher("RegistrarPago.jsp").forward(request, response);
                 return;
@@ -160,14 +150,12 @@ public class PagoControlador extends HttpServlet {
                 return;
             }
 
-            // Crear objeto Pago
             Pago pago = new Pago();
             pago.setIdFactura(idFactura);
             pago.setMonto(monto);
             pago.setMetodo(metodo);
             pago.setReferencia(referencia.isEmpty() ? null : referencia);
 
-            // Registrar pago
             boolean exito = pagoDao.registrarPago(pago);
 
             if (exito) {
@@ -176,7 +164,6 @@ public class PagoControlador extends HttpServlet {
                     monto, nuevoSaldo));
                 request.setAttribute("tipoMensaje", "success");
                 
-                // Limpiar formulario
                 request.removeAttribute("idFactura");
                 request.removeAttribute("monto");
                 request.removeAttribute("metodo");
@@ -194,9 +181,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("RegistrarPago.jsp").forward(request, response);
     }
 
-    /**
-     * Lista todos los pagos de una factura específica
-     */
     private void listarPagosPorFactura(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -218,16 +202,15 @@ public class PagoControlador extends HttpServlet {
                 request.setAttribute("totalPagos", pagos.size());
                 request.setAttribute("idFacturaConsulta", idFactura);
 
-                // Calcular total pagado
                 double totalPagado = 0.0;
                 for (Pago pago : pagos) {
-                    if (!"ANULADO".equals(pago.getEstado())) {
+                    // CORRECCIÓN: Estado según DAO
+                    if (!"fallido".equals(pago.getEstado())) {
                         totalPagado += pago.getMonto();
                     }
                 }
                 request.setAttribute("totalPagado", totalPagado);
 
-                // Obtener información de la factura
                 FacturaDao facturaDao = new FacturaDao();
                 Factura factura = facturaDao.obtenerFacturaPorId(idFactura);
                 if (factura != null) {
@@ -252,9 +235,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("PagosPorFactura.jsp").forward(request, response);
     }
 
-    /**
-     * Busca pagos con diversos criterios
-     */
     private void buscarPagos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -265,9 +245,8 @@ public class PagoControlador extends HttpServlet {
             String montoMaxStr = limpiarParametro(request.getParameter("montoMax"));
 
             PagoDao dao = new PagoDao();
-            List<PagoFacturaDTO> pagos = null;
+            List<Pago> pagos = null;
 
-            // Conversión de montos si se proporcionan
             Double montoMin = null, montoMax = null;
             if (!montoMinStr.isEmpty()) {
                 try {
@@ -285,37 +264,36 @@ public class PagoControlador extends HttpServlet {
                 }
             }
 
-            // Validar rango de montos
             if (montoMin != null && montoMax != null && montoMin > montoMax) {
                 request.setAttribute("mensaje", "❌ El monto mínimo no puede ser mayor que el máximo");
                 request.getRequestDispatcher("BuscarPagos.jsp").forward(request, response);
                 return;
             }
 
-            // Búsqueda con criterios
+            // CORRECCIÓN: Usar el método correcto del DAO
             pagos = dao.buscarPagos(metodo, estado, referencia, montoMin, montoMax);
 
             if (pagos != null && !pagos.isEmpty()) {
                 request.setAttribute("pagos", pagos);
                 request.setAttribute("totalPagos", pagos.size());
 
-                // Calcular estadísticas
                 double totalEncontrado = 0.0;
                 int pagosPendientes = 0, pagosConfirmados = 0, pagosAnulados = 0;
 
-                for (PagoFacturaDTO pago : pagos) {
-                    if (!"ANULADO".equals(pago.getEstado())) {
+                for (Pago pago : pagos) {
+                    // CORRECCIÓN: Estados según DAO
+                    if (!"fallido".equals(pago.getEstado())) {
                         totalEncontrado += pago.getMonto();
                     }
                     
                     switch (pago.getEstado()) {
-                        case "PENDIENTE":
+                        case "pendiente":
                             pagosPendientes++;
                             break;
-                        case "CONFIRMADO":
+                        case "confirmado":
                             pagosConfirmados++;
                             break;
-                        case "ANULADO":
+                        case "fallido":
                             pagosAnulados++;
                             break;
                     }
@@ -331,7 +309,6 @@ public class PagoControlador extends HttpServlet {
                 request.setAttribute("mensaje", "ℹ️ No se encontraron pagos con los criterios especificados");
             }
 
-            // Mantener parámetros de búsqueda
             request.setAttribute("metodoBusqueda", metodo);
             request.setAttribute("estadoBusqueda", estado);
             request.setAttribute("referenciaBusqueda", referencia);
@@ -346,9 +323,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("BuscarPagos.jsp").forward(request, response);
     }
 
-    /**
-     * Anula un pago específico
-     */
     private void anularPago(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -390,9 +364,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("DetallePago.jsp").forward(request, response);
     }
 
-    /**
-     * Confirma un pago pendiente
-     */
     private void confirmarPago(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -427,9 +398,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("DetallePago.jsp").forward(request, response);
     }
 
-    /**
-     * Lista pagos por rango de fechas
-     */
     private void listarPagosPorFecha(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -442,9 +410,9 @@ public class PagoControlador extends HttpServlet {
                 return;
             }
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            Timestamp fechaInicio = new Timestamp(sdf.parse(fechaInicioStr).getTime());
-            Timestamp fechaFin = new Timestamp(sdf.parse(fechaFinStr).getTime());
+            // CORRECCIÓN: Usar java.sql.Date en lugar de Timestamp
+            Date fechaInicio = Date.valueOf(fechaInicioStr);
+            Date fechaFin = Date.valueOf(fechaFinStr);
 
             if (fechaInicio.after(fechaFin)) {
                 request.setAttribute("mensaje", "❌ La fecha de inicio no puede ser mayor que la fecha fin");
@@ -453,7 +421,8 @@ public class PagoControlador extends HttpServlet {
             }
 
             PagoDao dao = new PagoDao();
-            List<PagoFacturaDTO> pagos = dao.obtenerPagosPorFecha(fechaInicio, fechaFin);
+            // CORRECCIÓN: Usar el método correcto que retorna List<Pago>
+            List<Pago> pagos = dao.obtenerPagosPorFecha(fechaInicio, fechaFin);
 
             if (pagos != null && !pagos.isEmpty()) {
                 request.setAttribute("pagos", pagos);
@@ -461,20 +430,20 @@ public class PagoControlador extends HttpServlet {
                 request.setAttribute("fechaInicio", fechaInicioStr);
                 request.setAttribute("fechaFin", fechaFinStr);
 
-                // Calcular totales por método de pago
                 double totalEfectivo = 0.0, totalTarjeta = 0.0, totalTransferencia = 0.0, totalOtros = 0.0;
                 
-                for (PagoFacturaDTO pago : pagos) {
-                    if (!"ANULADO".equals(pago.getEstado())) {
+                for (Pago pago : pagos) {
+                    // CORRECCIÓN: Estado según DAO
+                    if (!"fallido".equals(pago.getEstado())) {
                         switch (pago.getMetodo()) {
-                            case "EFECTIVO":
+                            case "efectivo":
                                 totalEfectivo += pago.getMonto();
                                 break;
-                            case "TARJETA_CREDITO":
-                            case "TARJETA_DEBITO":
+                            case "tarjeta_credito":
+                            case "tarjeta_debito":
                                 totalTarjeta += pago.getMonto();
                                 break;
-                            case "TRANSFERENCIA":
+                            case "transferencia":
                                 totalTransferencia += pago.getMonto();
                                 break;
                             default:
@@ -502,14 +471,11 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("PagosPorFecha.jsp").forward(request, response);
     }
 
-    /**
-     * Lista todos los pagos del sistema
-     */
     private void listarTodosPagos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             String limiteStr = limpiarParametro(request.getParameter("limite"));
-            int limite = 100; // Límite por defecto
+            Integer limite = 100;
 
             if (!limiteStr.isEmpty()) {
                 try {
@@ -523,17 +489,18 @@ public class PagoControlador extends HttpServlet {
             }
 
             PagoDao dao = new PagoDao();
-            List<PagoFacturaDTO> pagos = dao.listarTodosPagos(limite);
+            // CORRECCIÓN: Usar el método correcto que retorna List<Pago>
+            List<Pago> pagos = dao.listarTodosPagos(limite);
 
             if (pagos != null && !pagos.isEmpty()) {
                 request.setAttribute("pagos", pagos);
                 request.setAttribute("totalPagos", pagos.size());
                 request.setAttribute("limiteAplicado", limite);
 
-                // Estadísticas generales
                 double totalPagos = 0.0;
-                for (PagoFacturaDTO pago : pagos) {
-                    if (!"ANULADO".equals(pago.getEstado())) {
+                for (Pago pago : pagos) {
+                    // CORRECCIÓN: Estado según DAO
+                    if (!"fallido".equals(pago.getEstado())) {
                         totalPagos += pago.getMonto();
                     }
                 }
@@ -552,9 +519,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("ListaPagos.jsp").forward(request, response);
     }
 
-    /**
-     * Manejo centralizado de errores
-     */
     private void manejarError(HttpServletRequest request, HttpServletResponse response, 
                              Exception e, String mensajeContexto) 
             throws ServletException, IOException {
@@ -570,9 +534,6 @@ public class PagoControlador extends HttpServlet {
         request.getRequestDispatcher("UtilidadesPagos.jsp").forward(request, response);
     }
 
-    /**
-     * Método auxiliar para limpiar parámetros
-     */
     private String limpiarParametro(String param) {
         if (param == null) {
             return "";
