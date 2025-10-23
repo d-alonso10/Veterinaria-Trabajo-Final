@@ -99,9 +99,9 @@ public class DetalleServicioControlador extends HttpServlet {
                     ServicioDao servicioDao = new ServicioDao();
                     Servicio servicio = servicioDao.obtenerServicioPorId(idServicio);
                     if (servicio != null) {
-                        // ****** INICIO DE CORRECCIÓN DE BUG ******
+                        // ****** INICIO DE CORRECCIÓN (BUG + COHERENCIA) ******
                         precioUnitario = servicio.getPrecio_base(); // El método correcto es getPrecio_base()
-                        // ****** FIN DE CORRECCIÓN DE BUG ******
+                        // ****** FIN DE CORRECCIÓN (BUG + COHERENCIA) ******
                     } else {
                         throw new Exception("Servicio no encontrado con ID: " + idServicio);
                     }
@@ -134,6 +134,9 @@ public class DetalleServicioControlador extends HttpServlet {
             detalle.setIdServicio(idServicio);
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(precioUnitario);
+            // ****** INICIO CORRECCIÓN COHERENCIA (Observación) ******
+            detalle.setSubtotal(cantidad * precioUnitario); // Calcular subtotal
+            // ****** FIN CORRECCIÓN COHERENCIA ******
             detalle.setDescuentoId(descuentoId);
             detalle.setObservaciones(observaciones);
 
@@ -179,7 +182,7 @@ public class DetalleServicioControlador extends HttpServlet {
                 return;
             }
             
-            // Manejar mensajes de éxito de acciones PRG
+            // ****** INICIO CORRECCIÓN (Manejar mensajes PRG) ******
             if ("exito".equals(request.getParameter("agregado"))) {
                 request.setAttribute("mensaje", "✅ Servicio agregado exitosamente.");
                 request.setAttribute("tipoMensaje", "exito");
@@ -190,6 +193,7 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.setAttribute("mensaje", "✅ Detalle de servicio actualizado exitosamente.");
                 request.setAttribute("tipoMensaje", "exito");
             }
+            // ****** FIN CORRECCIÓN ******
 
             int idAtencion = Integer.parseInt(idAtencionStr);
             listarDetallesAtencionInterno(request, idAtencion); // Carga los datos en el request
@@ -228,7 +232,7 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.setAttribute("detallesServicios", null);
                 request.setAttribute("totalServicios", 0);
                 request.setAttribute("totalAtencion", 0.0);
-                if (request.getAttribute("mensaje") == null) { // No sobreescribir mensajes de éxito
+                if (request.getAttribute("mensaje") == null) { // No sobreescribir mensajes de éxito/error
                     request.setAttribute("mensaje", "ℹ️ No hay servicios registrados para esta atención");
                 }
             }
@@ -323,6 +327,11 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
+            
+            // ****** INICIO CORRECCIÓN COHERENCIA (Observación) ******
+            // Crear objeto DetalleServicio para pasar al DAO (aunque el DAO actualice campos específicos)
+            // El DAO espera cantidad, precio, observaciones.
+            // ****** FIN CORRECCIÓN COHERENCIA ******
 
             DetalleServicioDao dao = new DetalleServicioDao();
             boolean exito = dao.actualizarDetalleServicio(idDetalle, cantidad, precioUnitario, observaciones);
