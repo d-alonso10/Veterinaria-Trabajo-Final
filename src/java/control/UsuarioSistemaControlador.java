@@ -4,6 +4,7 @@ import dao.UsuarioSistemaDao;
 import modelo.UsuarioSistema;
 import java.io.IOException;
 import java.security.MessageDigest;
+import java.util.ArrayList; // Import añadido
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
@@ -47,7 +48,9 @@ public class UsuarioSistemaControlador extends HttpServlet {
                         actualizarPerfil(request, response);
                         break;
                     case "cambiarEstado":
-                        cambiarEstadoUsuario(request, response);
+                        // Acción eliminada ya que el campo 'estado' no existe
+                        System.err.println("WARN: La acción 'cambiarEstado' fue invocada pero está deshabilitada (campo 'estado' no existe).");
+                        response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=listar&warn=estado_no_impl");
                         break;
                     case "buscarUsuarios":
                         buscarUsuarios(request, response);
@@ -55,9 +58,10 @@ public class UsuarioSistemaControlador extends HttpServlet {
                     case "eliminarUsuario":
                         eliminarUsuario(request, response);
                         break;
-                    case "obtenerPerfil":
-                        obtenerPerfilUsuario(request, response);
-                        break;
+                    case "obtenerPerfil": // Renombrado para claridad
+                    case "mostrarPerfil": // Acción GET para mostrar el perfil
+                         obtenerPerfilUsuario(request, response);
+                         break;
                     case "listar":
                         listarUsuarios(request, response);
                         break;
@@ -65,13 +69,25 @@ public class UsuarioSistemaControlador extends HttpServlet {
                         mostrarFormularioCreacion(request, response);
                         break;
                     default:
-                        response.sendRedirect("Login.jsp");
+                        // Si hay sesión, ir al menú, si no, al login
+                        HttpSession session = request.getSession(false);
+                        if (session != null && session.getAttribute("usuarioLogueado") != null) {
+                            response.sendRedirect(request.getContextPath() + "/Menu.jsp");
+                        } else {
+                            response.sendRedirect("Login.jsp");
+                        }
                 }
             } else {
-                response.sendRedirect("Login.jsp");
+                 // Si hay sesión, ir al menú, si no, al login
+                HttpSession session = request.getSession(false);
+                if (session != null && session.getAttribute("usuarioLogueado") != null) {
+                     response.sendRedirect(request.getContextPath() + "/Menu.jsp");
+                } else {
+                    response.sendRedirect("Login.jsp");
+                }
             }
         } catch (Exception e) {
-            manejarError(request, response, e, "Error general en el controlador de usuarios");
+            manejarErrorGeneral(request, response, e, "Error general en el controlador de usuarios");
         }
     }
 
@@ -81,41 +97,26 @@ public class UsuarioSistemaControlador extends HttpServlet {
     private void iniciarSesion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            // Obtener parámetros
             String email = limpiarParametro(request.getParameter("email"));
             String password = limpiarParametro(request.getParameter("password"));
             String recordarSesion = request.getParameter("recordarSesion");
 
-            // Validaciones básicas
             if (email.isEmpty() || password.isEmpty()) {
-                request.setAttribute("mensaje", "❌ Email y contraseña son obligatorios");
-                request.getRequestDispatcher("Login.jsp").forward(request, response);
+                manejarErrorVista(request, response, "Login.jsp", "❌ Email y contraseña son obligatorios");
                 return;
             }
-
-            // Validar formato de email
             if (!esEmailValido(email)) {
-                request.setAttribute("mensaje", "❌ Formato de email inválido");
-                request.getRequestDispatcher("Login.jsp").forward(request, response);
+                 manejarErrorVista(request, response, "Login.jsp", "❌ Formato de email inválido");
                 return;
             }
 
-            // Encriptar password para verificación
             String passwordHash = encriptarPassword(password);
-
-            // Validar credenciales
             UsuarioSistemaDao dao = new UsuarioSistemaDao();
             UsuarioSistema usuario = dao.validarUsuario(email, passwordHash);
 
             if (usuario != null) {
-                // Verificar que el usuario esté activo
-                if (!"ACTIVO".equals(usuario.getEstado())) {
-                    request.setAttribute("mensaje", "❌ Usuario inactivo. Contacte al administrador");
-                    request.getRequestDispatcher("Login.jsp").forward(request, response);
-                    return;
-                }
+                // Ya no se verifica el estado 'ACTIVO' porque el campo no existe
 
-                // Crear sesión
                 HttpSession session = request.getSession(true);
                 session.setAttribute("usuarioLogueado", usuario);
                 session.setAttribute("idUsuario", usuario.getIdUsuario());
@@ -123,44 +124,58 @@ public class UsuarioSistemaControlador extends HttpServlet {
                 session.setAttribute("rolUsuario", usuario.getRol());
                 session.setAttribute("emailUsuario", usuario.getEmail());
 
-                // Configurar tiempo de sesión
                 if ("on".equals(recordarSesion)) {
                     session.setMaxInactiveInterval(30 * 24 * 60 * 60); // 30 días
                 } else {
                     session.setMaxInactiveInterval(8 * 60 * 60); // 8 horas
                 }
 
-                // Registrar último acceso
                 dao.registrarUltimoAcceso(usuario.getIdUsuario());
 
-                // Redirigir según rol
-                switch (usuario.getRol()) {
-                    case "ADMINISTRADOR":
-                        response.sendRedirect("Menu.jsp");
-                        break;
-                    case "VETERINARIO":
-                        response.sendRedirect("ColaAtencion.jsp");
-                        break;
-                    case "RECEPCIONISTA":
-                        response.sendRedirect("ProximasCitas.jsp");
-                        break;
-                    default:
-                        response.sendRedirect("Menu.jsp");
-                }
+                 // Redirección centralizada
+                redirigirSegunRol(response, usuario.getRol(), request); // Pasar request para context path
 
             } else {
-                // Registrar intento fallido
                 dao.registrarIntentoFallidoLogin(email);
-                
-                request.setAttribute("mensaje", "❌ Credenciales incorrectas");
                 request.setAttribute("emailIntentado", email);
-                request.getRequestDispatcher("Login.jsp").forward(request, response);
+                manejarErrorVista(request, response, "Login.jsp", "❌ Credenciales incorrectas");
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al iniciar sesión");
+            manejarErrorGeneral(request, response, e, "Error al iniciar sesión");
         }
     }
+
+     /**
+     * Redirige a la página principal según el rol del usuario, usando ContextPath.
+     */
+    private void redirigirSegunRol(HttpServletResponse response, String rol, HttpServletRequest request) throws IOException {
+         String targetPage = "/Menu.jsp"; // Página por defecto (relativa al context path)
+         if (rol != null) {
+              switch (rol.toUpperCase()) { // Usa UpperCase para comparar roles
+                  case "ADMINISTRADOR":
+                      targetPage = "/Menu.jsp"; // O Dashboard.jsp si prefieres
+                      break;
+                  case "VETERINARIO":
+                      targetPage = "/ColaAtencion.jsp"; // Ajusta si la URL es diferente
+                      break;
+                  case "RECEPCIONISTA":
+                      targetPage = "/ProximasCitas.jsp"; // Ajusta si la URL es diferente
+                      break;
+                  // Añade otros roles si es necesario
+                   case "GROOMER":
+                       // Define a dónde debe ir un Groomer
+                       targetPage = "/Menu.jsp"; // Ejemplo: al menú general
+                       break;
+                   case "CONTADOR":
+                        // Define a dónde debe ir un Contador
+                       targetPage = "/ReporteControlador?accion=listar"; // Ejemplo: a reportes
+                       break;
+              }
+         }
+        response.sendRedirect(request.getContextPath() + targetPage);
+    }
+
 
     /**
      * Cierra la sesión del usuario actual
@@ -169,27 +184,21 @@ public class UsuarioSistemaControlador extends HttpServlet {
             throws ServletException, IOException {
         try {
             HttpSession session = request.getSession(false);
-            
             if (session != null) {
-                // Obtener información del usuario antes de destruir la sesión
                 UsuarioSistema usuario = (UsuarioSistema) session.getAttribute("usuarioLogueado");
-                
                 if (usuario != null) {
-                    // Registrar cierre de sesión
                     UsuarioSistemaDao dao = new UsuarioSistemaDao();
                     dao.registrarCierreSesion(usuario.getIdUsuario());
                 }
-
-                // Invalidar sesión
                 session.invalidate();
             }
-
-            // Redirigir al login
-            response.sendRedirect("Login.jsp?mensaje=✅ Sesión cerrada exitosamente");
+            // Añadir context path a la redirección
+            response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=logout_exitoso");
 
         } catch (Exception e) {
-            // En caso de error, forzar redirección al login
-            response.sendRedirect("Login.jsp?mensaje=⚠️ Error al cerrar sesión");
+            System.err.println("Error al cerrar sesión: " + e.getMessage());
+             // Añadir context path a la redirección
+            response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=error_logout");
         }
     }
 
@@ -198,105 +207,98 @@ public class UsuarioSistemaControlador extends HttpServlet {
      */
     private void registrarUsuario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String vistaError = "CrearUsuario.jsp"; // Vista a la que volver en caso de error
         try {
-            // Obtener parámetros
             String nombre = limpiarParametro(request.getParameter("nombre"));
             String email = limpiarParametro(request.getParameter("email"));
             String password = limpiarParametro(request.getParameter("password"));
             String confirmPassword = limpiarParametro(request.getParameter("confirmPassword"));
             String rol = limpiarParametro(request.getParameter("rol"));
 
-            // Validaciones básicas
+            // Validaciones (Usando manejarErrorVista para devolver al formulario)
             if (nombre.isEmpty() || email.isEmpty() || password.isEmpty() || rol.isEmpty()) {
-                request.setAttribute("mensaje", "❌ Todos los campos son obligatorios");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
-            }
-
-            // Validar confirmación de contraseña
+                manejarErrorVista(request, response, vistaError, "❌ Todos los campos son obligatorios"); return; }
             if (!password.equals(confirmPassword)) {
-                request.setAttribute("mensaje", "❌ Las contraseñas no coinciden");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
-            }
-
-            // Validar longitud del nombre
+                manejarErrorVista(request, response, vistaError, "❌ Las contraseñas no coinciden"); return; }
             if (nombre.length() < 2 || nombre.length() > 100) {
-                request.setAttribute("mensaje", "❌ El nombre debe tener entre 2 y 100 caracteres");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
-            }
-
-            // Validar formato de email
+                 manejarErrorVista(request, response, vistaError, "❌ El nombre debe tener entre 2 y 100 caracteres"); return; }
             if (!esEmailValido(email)) {
-                request.setAttribute("mensaje", "❌ Formato de email inválido");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
-            }
-
-            // Validar fortaleza de contraseña
+                 manejarErrorVista(request, response, vistaError, "❌ Formato de email inválido"); return; }
             if (!esPasswordSeguro(password)) {
-                request.setAttribute("mensaje", "❌ La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
-            }
+                 manejarErrorVista(request, response, vistaError, "❌ La contraseña no cumple los requisitos (mín 8 chars, mayús, minús, núm)"); return; }
 
-            // Validar roles permitidos
-            String[] rolesPermitidos = {"ADMINISTRADOR", "VETERINARIO", "RECEPCIONISTA", "ASISTENTE"};
-            boolean rolValido = false;
-            for (String rolPermitido : rolesPermitidos) {
-                if (rolPermitido.equals(rol.toUpperCase())) {
-                    rol = rolPermitido;
-                    rolValido = true;
-                    break;
-                }
-            }
+            // Validar rol (mejorado)
+             String rolValidado = validarRol(rol);
+             if (rolValidado == null) {
+                  manejarErrorVista(request, response, vistaError, "❌ Rol no válido"); return;
+             }
+             rol = rolValidado; // Usar el rol validado en mayúsculas
 
-            if (!rolValido) {
-                request.setAttribute("mensaje", "❌ Rol no válido");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
-            }
 
-            // Verificar permisos (solo administradores pueden registrar usuarios)
             HttpSession session = request.getSession(false);
-            if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
-                request.setAttribute("mensaje", "❌ No tiene permisos para registrar usuarios");
-                request.getRequestDispatcher("RegistrarUsuario.jsp").forward(request, response);
-                return;
+            // Verifica permiso y maneja el caso donde session es null o el rol no es el esperado
+            if (session == null || !"ADMINISTRADOR".equalsIgnoreCase( (String) session.getAttribute("rolUsuario"))) {
+                manejarErrorVista(request, response, vistaError, "❌ No tiene permisos para registrar usuarios"); return;
             }
 
-            // Encriptar contraseña
-            String passwordHash = encriptarPassword(password);
 
-            // Crear objeto usuario
+            UsuarioSistemaDao dao = new UsuarioSistemaDao();
+             // Verificar si el email ya existe ANTES de intentar insertar
+             if (dao.existeEmail(email)) {
+                 manejarErrorVista(request, response, vistaError, "❌ El email ya está registrado"); return;
+             }
+
+
+            String passwordHash = encriptarPassword(password);
             UsuarioSistema usuario = new UsuarioSistema();
             usuario.setNombre(nombre);
             usuario.setEmail(email);
             usuario.setPasswordHash(passwordHash);
             usuario.setRol(rol);
+             // NO se establece estado inicial porque el campo no existe
 
-            // Registrar usuario
-            UsuarioSistemaDao dao = new UsuarioSistemaDao();
+
             int idUsuarioCreado = dao.registrarUsuarioSistema(usuario);
 
             if (idUsuarioCreado > 0) {
-                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                // PRG: Redirigir a la lista con mensaje de éxito
                 response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=listar&creado=exito&id=" + idUsuarioCreado);
-                return;
+                // No necesita return aquí porque sendRedirect termina la respuesta
             } else {
-                request.setAttribute("mensaje", "❌ Error al registrar usuario. Posiblemente el email ya existe");
-                request.setAttribute("tipoMensaje", "error");
+                 manejarErrorVista(request, response, vistaError, "❌ Error al registrar usuario. Intente nuevamente.");
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al registrar usuario");
-            return;
+             // Error general, redirigir a una página de error o al formulario con mensaje
+             manejarErrorVista(request, response, vistaError, "❌ Error del sistema al registrar: " + e.getMessage());
         }
-
-        // Solo usar forward en caso de error para mostrar el mensaje en el formulario
-        request.getRequestDispatcher("CrearUsuario.jsp").forward(request, response);
+         // No debe haber un forward aquí si se usa PRG
     }
+
+
+    /**
+     * Valida y normaliza el rol del usuario.
+     */
+     private String validarRol(String rolInput) {
+         if (rolInput == null || rolInput.trim().isEmpty()) {
+             return null;
+         }
+         String rolUpper = rolInput.trim().toUpperCase();
+         // Lista de roles válidos según la definición ENUM en la BD
+         String[] rolesPermitidos = {"RECEPCIONISTA", "ADMIN", "GROOMER", "CONTADOR", "VETERINARIO"};
+         for (String rolPermitido : rolesPermitidos) {
+             if (rolPermitido.equals(rolUpper)) {
+                 // Mapea 'ADMIN' a 'ADMINISTRADOR' si tu código Java usa ese término internamente
+                 //if ("ADMIN".equals(rolUpper)) return "ADMINISTRADOR";
+                 return rolPermitido; // Devuelve el rol tal como está en la BD
+             }
+         }
+          // Si tu código usa "ADMINISTRADOR" pero la BD tiene "ADMIN", necesitas el mapeo:
+         if ("ADMINISTRADOR".equals(rolUpper)) return "ADMIN";
+
+         return null; // Rol no válido
+     }
+
 
     /**
      * Lista todos los usuarios del sistema
@@ -304,323 +306,357 @@ public class UsuarioSistemaControlador extends HttpServlet {
     private void listarUsuarios(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            // Verificar si viene de una creación exitosa
-            String creado = request.getParameter("creado");
-            String idCreado = request.getParameter("id");
-            if ("exito".equals(creado)) {
-                request.setAttribute("mensaje", "✅ Usuario creado exitosamente" + (idCreado != null ? " con ID: " + idCreado : ""));
-                request.setAttribute("tipoMensaje", "exito");
-            }
-
-            // Verificar permisos
             HttpSession session = request.getSession(false);
-            if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
-                request.setAttribute("mensaje", "❌ No tiene permisos para ver la lista de usuarios");
-                response.sendRedirect("Menu.jsp");
+            if (session == null || !"ADMIN".equalsIgnoreCase((String) session.getAttribute("rolUsuario"))) { // Compara con ADMIN (de BD)
+                response.sendRedirect(request.getContextPath() + "/Menu.jsp?mensaje=permiso_denegado");
                 return;
             }
+
+             // Manejo de mensajes de éxito de acciones previas (PRG)
+            String creado = request.getParameter("creado");
+            String actualizado = request.getParameter("actualizado");
+            String eliminado = request.getParameter("eliminado");
+            // String estadoCambiado = request.getParameter("estadoCambiado"); // No aplica sin campo estado
+            String idParam = request.getParameter("id");
+
+            if ("exito".equals(creado)) {
+                request.setAttribute("mensaje", "✅ Usuario" + (idParam != null ? " ID " + idParam : "") + " creado exitosamente.");
+                request.setAttribute("tipoMensaje", "exito");
+            } else if ("exito".equals(actualizado)) {
+                request.setAttribute("mensaje", "✅ Usuario" + (idParam != null ? " ID " + idParam : "") + " actualizado exitosamente.");
+                request.setAttribute("tipoMensaje", "exito");
+            } else if ("exito".equals(eliminado)) {
+                 request.setAttribute("mensaje", "✅ Usuario" + (idParam != null ? " ID " + idParam : "") + " eliminado exitosamente.");
+                 request.setAttribute("tipoMensaje", "exito");
+            } /* else if ("exito".equals(estadoCambiado)) { // No aplica sin campo estado
+                 String accionEstado = request.getParameter("usuarioAccion");
+                 request.setAttribute("mensaje", "✅ Usuario" + (idParam != null ? " ID " + idParam : "") + " " + (accionEstado != null ? accionEstado : "con estado cambiado") + " exitosamente.");
+                 request.setAttribute("tipoMensaje", "exito");
+            } */
+             // Añadir manejo de advertencias (como estado no implementado)
+             String warn = request.getParameter("warn");
+             if ("estado_no_impl".equals(warn)) {
+                 request.setAttribute("mensaje", "⚠️ La función de cambiar estado de usuario está deshabilitada.");
+                 request.setAttribute("tipoMensaje", "info"); // O 'warning' si tienes ese estilo CSS
+             }
+
 
             UsuarioSistemaDao dao = new UsuarioSistemaDao();
             List<UsuarioSistema> usuarios = dao.listarTodosUsuarios();
 
-            if (usuarios != null && !usuarios.isEmpty()) {
-                request.setAttribute("usuarios", usuarios);
-                request.setAttribute("totalUsuarios", usuarios.size());
+            request.setAttribute("usuarios", usuarios);
+            request.setAttribute("totalUsuarios", usuarios != null ? usuarios.size() : 0);
 
-                // Estadísticas por rol
-                int administradores = 0, veterinarios = 0, recepcionistas = 0, otros = 0;
-                int activos = 0, inactivos = 0;
+            if (usuarios != null && !usuarios.isEmpty()) {
+                // Calcular estadísticas si hay usuarios
+                int administradores = 0, veterinarios = 0, recepcionistas = 0, groomers = 0, contadores=0, otros = 0;
+                // int activos = 0, inactivos = 0; // No aplica sin campo estado
 
                 for (UsuarioSistema usuario : usuarios) {
-                    switch (usuario.getRol()) {
-                        case "ADMINISTRADOR":
-                            administradores++;
-                            break;
-                        case "VETERINARIO":
-                            veterinarios++;
-                            break;
-                        case "RECEPCIONISTA":
-                            recepcionistas++;
-                            break;
-                        default:
-                            otros++;
-                    }
-
-                    if ("ACTIVO".equals(usuario.getEstado())) {
-                        activos++;
+                    if (usuario.getRol() != null) {
+                         // Comparar con roles de la BD
+                        switch (usuario.getRol().toUpperCase()) {
+                            case "ADMIN": administradores++; break;
+                            case "VETERINARIO": veterinarios++; break;
+                            case "RECEPCIONISTA": recepcionistas++; break;
+                            case "GROOMER": groomers++; break;
+                            case "CONTADOR": contadores++; break;
+                            default: otros++;
+                        }
                     } else {
-                        inactivos++;
+                        otros++;
                     }
-                }
 
+                    // No se cuentan activos/inactivos
+                }
                 request.setAttribute("administradores", administradores);
                 request.setAttribute("veterinarios", veterinarios);
                 request.setAttribute("recepcionistas", recepcionistas);
+                request.setAttribute("groomers", groomers);
+                request.setAttribute("contadores", contadores);
                 request.setAttribute("otrosRoles", otros);
-                request.setAttribute("usuariosActivos", activos);
-                request.setAttribute("usuariosInactivos", inactivos);
-                request.setAttribute("mensaje", "✅ Lista de usuarios cargada");
+                // request.setAttribute("usuariosActivos", activos); // No aplica
+                // request.setAttribute("usuariosInactivos", inactivos); // No aplica
+
+                 if (request.getAttribute("mensaje") == null) {
+                      request.setAttribute("mensaje", "✅ Lista de usuarios cargada (" + usuarios.size() + ")");
+                 }
+
             } else {
-                request.setAttribute("usuarios", null);
-                request.setAttribute("mensaje", "ℹ️ No existen usuarios registrados");
+                 if (request.getAttribute("mensaje") == null) {
+                      request.setAttribute("mensaje", "ℹ️ No existen usuarios registrados");
+                 }
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al listar usuarios");
-            return;
+             System.err.println("Error grave al listar usuarios: " + e.getMessage());
+             e.printStackTrace();
+             request.setAttribute("mensaje", "❌ Error crítico al cargar la lista de usuarios.");
+             request.setAttribute("tipoMensaje", "error");
+             request.setAttribute("usuarios", new ArrayList<UsuarioSistema>());
+             request.setAttribute("totalUsuarios", 0);
         }
 
         request.getRequestDispatcher("ListaUsuarios.jsp").forward(request, response);
     }
 
     /**
-     * Cambia la contraseña de un usuario
+     * Cambia la contraseña del usuario logueado
      */
     private void cambiarPassword(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String vistaError = "CambiarPassword.jsp";
         try {
             String passwordActual = limpiarParametro(request.getParameter("passwordActual"));
             String passwordNuevo = limpiarParametro(request.getParameter("passwordNuevo"));
             String confirmPasswordNuevo = limpiarParametro(request.getParameter("confirmPasswordNuevo"));
 
-            // Validaciones básicas
             if (passwordActual.isEmpty() || passwordNuevo.isEmpty() || confirmPasswordNuevo.isEmpty()) {
-                request.setAttribute("mensaje", "❌ Todos los campos son obligatorios");
-                request.getRequestDispatcher("CambiarPassword.jsp").forward(request, response);
-                return;
-            }
-
+                manejarErrorVista(request, response, vistaError, "❌ Todos los campos son obligatorios"); return; }
             if (!passwordNuevo.equals(confirmPasswordNuevo)) {
-                request.setAttribute("mensaje", "❌ Las contraseñas nuevas no coinciden");
-                request.getRequestDispatcher("CambiarPassword.jsp").forward(request, response);
-                return;
-            }
-
+                manejarErrorVista(request, response, vistaError, "❌ Las contraseñas nuevas no coinciden"); return; }
             if (!esPasswordSeguro(passwordNuevo)) {
-                request.setAttribute("mensaje", "❌ La contraseña nueva no cumple con los requisitos de seguridad");
-                request.getRequestDispatcher("CambiarPassword.jsp").forward(request, response);
-                return;
-            }
+                manejarErrorVista(request, response, vistaError, "❌ La contraseña nueva no cumple los requisitos"); return; }
 
-            // Verificar sesión
             HttpSession session = request.getSession(false);
-            if (session == null) {
-                response.sendRedirect("Login.jsp");
-                return;
-            }
+            if (session == null || session.getAttribute("usuarioLogueado") == null) {
+                response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=sesion_expirada"); return; }
 
             UsuarioSistema usuarioLogueado = (UsuarioSistema) session.getAttribute("usuarioLogueado");
-            if (usuarioLogueado == null) {
-                response.sendRedirect("Login.jsp");
-                return;
-            }
-
-            // Verificar contraseña actual
             String passwordActualHash = encriptarPassword(passwordActual);
             UsuarioSistemaDao dao = new UsuarioSistemaDao();
-            
-            if (!dao.verificarPasswordActual(usuarioLogueado.getIdUsuario(), passwordActualHash)) {
-                request.setAttribute("mensaje", "❌ Contraseña actual incorrecta");
-                request.getRequestDispatcher("CambiarPassword.jsp").forward(request, response);
-                return;
-            }
 
-            // Cambiar contraseña
+            if (!dao.verificarPasswordActual(usuarioLogueado.getIdUsuario(), passwordActualHash)) {
+                manejarErrorVista(request, response, vistaError, "❌ Contraseña actual incorrecta"); return; }
+
             String passwordNuevoHash = encriptarPassword(passwordNuevo);
             boolean exito = dao.cambiarPassword(usuarioLogueado.getIdUsuario(), passwordNuevoHash);
 
             if (exito) {
-                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                // PRG: Redirigir al perfil con mensaje de éxito
                 response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=mostrarPerfil&passwordCambiada=exito");
-                return;
             } else {
-                request.setAttribute("mensaje", "❌ Error al cambiar la contraseña");
-                request.setAttribute("tipoMensaje", "error");
+                 manejarErrorVista(request, response, vistaError, "❌ Error al actualizar la contraseña en la base de datos");
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al cambiar contraseña");
-            return;
+             manejarErrorVista(request, response, vistaError, "❌ Error del sistema al cambiar contraseña: " + e.getMessage());
         }
-
-        // Solo usar forward en caso de error
-        request.getRequestDispatcher("CambiarPassword.jsp").forward(request, response);
     }
 
     /**
-     * Actualiza el perfil del usuario actual
+     * Actualiza el perfil del usuario actual (nombre, email)
      */
     private void actualizarPerfil(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String vistaError = "PerfilUsuario.jsp";
         try {
             String nombre = limpiarParametro(request.getParameter("nombre"));
             String email = limpiarParametro(request.getParameter("email"));
 
-            // Validaciones
             if (nombre.isEmpty() || email.isEmpty()) {
-                request.setAttribute("mensaje", "❌ Nombre y email son obligatorios");
-                request.getRequestDispatcher("PerfilUsuario.jsp").forward(request, response);
-                return;
-            }
-
+                manejarErrorVista(request, response, vistaError, "❌ Nombre y email son obligatorios"); return; }
+             if (nombre.length() < 2 || nombre.length() > 100) {
+                 manejarErrorVista(request, response, vistaError, "❌ El nombre debe tener entre 2 y 100 caracteres"); return; }
             if (!esEmailValido(email)) {
-                request.setAttribute("mensaje", "❌ Formato de email inválido");
-                request.getRequestDispatcher("PerfilUsuario.jsp").forward(request, response);
-                return;
-            }
+                manejarErrorVista(request, response, vistaError, "❌ Formato de email inválido"); return; }
 
-            // Verificar sesión
             HttpSession session = request.getSession(false);
-            if (session == null) {
-                response.sendRedirect("Login.jsp");
-                return;
-            }
+             if (session == null || session.getAttribute("usuarioLogueado") == null) {
+                 response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=sesion_expirada"); return; }
 
             UsuarioSistema usuarioLogueado = (UsuarioSistema) session.getAttribute("usuarioLogueado");
-            if (usuarioLogueado == null) {
-                response.sendRedirect("Login.jsp");
-                return;
-            }
-
             UsuarioSistemaDao dao = new UsuarioSistemaDao();
+
+             if (!email.equalsIgnoreCase(usuarioLogueado.getEmail()) && dao.existeEmail(email)) {
+                 manejarErrorVista(request, response, vistaError, "❌ El nuevo email ya está registrado por otro usuario"); return;
+             }
+
+
             boolean exito = dao.actualizarPerfil(usuarioLogueado.getIdUsuario(), nombre, email);
 
             if (exito) {
-                // Actualizar datos en la sesión
+                // Actualizar sesión
                 usuarioLogueado.setNombre(nombre);
                 usuarioLogueado.setEmail(email);
                 session.setAttribute("usuarioLogueado", usuarioLogueado);
                 session.setAttribute("nombreUsuario", nombre);
                 session.setAttribute("emailUsuario", email);
 
-                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                // PRG: Redirigir al perfil con mensaje de éxito
                 response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=mostrarPerfil&actualizado=exito");
-                return;
             } else {
-                request.setAttribute("mensaje", "❌ Error al actualizar el perfil");
-                request.setAttribute("tipoMensaje", "error");
+                 manejarErrorVista(request, response, vistaError, "❌ Error al actualizar el perfil en la base de datos");
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al actualizar perfil");
-            return;
+             manejarErrorVista(request, response, vistaError, "❌ Error del sistema al actualizar perfil: " + e.getMessage());
         }
-
-        // Solo usar forward en caso de error
-        request.getRequestDispatcher("PerfilUsuario.jsp").forward(request, response);
     }
 
     /**
-     * Cambia el estado de un usuario (solo administradores)
+     * Busca usuarios por criterios (GET request, muestra formulario y resultados)
+     * Versión SIN campo estado.
      */
-    private void cambiarEstadoUsuario(HttpServletRequest request, HttpServletResponse response)
+    private void buscarUsuarios(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String vista = "BuscarUsuarios.jsp";
         try {
-            // Verificar permisos
             HttpSession session = request.getSession(false);
-            if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
-                request.setAttribute("mensaje", "❌ No tiene permisos para cambiar estados de usuarios");
-                response.sendRedirect("Menu.jsp");
-                return;
+             if (session == null || !"ADMIN".equalsIgnoreCase((String) session.getAttribute("rolUsuario"))) { // Compara con ADMIN
+                 response.sendRedirect(request.getContextPath() + "/Menu.jsp?mensaje=permiso_denegado"); return;
             }
 
-            String idUsuarioStr = limpiarParametro(request.getParameter("idUsuario"));
-            String nuevoEstado = limpiarParametro(request.getParameter("estado"));
-
-            if (idUsuarioStr.isEmpty() || nuevoEstado.isEmpty()) {
             String termino = limpiarParametro(request.getParameter("termino"));
             String rol = limpiarParametro(request.getParameter("rol"));
-            String estado = limpiarParametro(request.getParameter("estado"));
+            // String estado = null; // No se usa estado
 
-            UsuarioSistemaDao dao = new UsuarioSistemaDao();
-            List<UsuarioSistema> usuarios = dao.buscarUsuarios(termino, rol, estado);
+             List<UsuarioSistema> usuarios = null;
+             boolean busquedaRealizada = request.getParameter("buscarBtn") != null;
 
-            if (usuarios != null && !usuarios.isEmpty()) {
-                request.setAttribute("usuarios", usuarios);
-                request.setAttribute("totalUsuarios", usuarios.size());
-                request.setAttribute("mensaje", "✅ Se encontraron " + usuarios.size() + " usuarios");
+            if (busquedaRealizada) {
+                UsuarioSistemaDao dao = new UsuarioSistemaDao();
+                 usuarios = dao.buscarUsuarios(termino, rol); // Llama al método sin estado
+
+                 if (usuarios != null && !usuarios.isEmpty()) {
+                    request.setAttribute("mensaje", "✅ Se encontraron " + usuarios.size() + " usuarios");
+                    request.setAttribute("tipoMensaje", "info");
+                } else {
+                    request.setAttribute("mensaje", "ℹ️ No se encontraron usuarios con los criterios especificados");
+                    request.setAttribute("tipoMensaje", "info");
+                }
             } else {
-                request.setAttribute("usuarios", null);
-                request.setAttribute("mensaje", "ℹ️ No se encontraron usuarios con los criterios especificados");
+                 usuarios = new ArrayList<>();
             }
 
-            // Mantener parámetros de búsqueda
+            request.setAttribute("usuarios", usuarios);
+            request.setAttribute("totalResultados", usuarios != null ? usuarios.size() : 0);
             request.setAttribute("terminoBusqueda", termino);
             request.setAttribute("rolBusqueda", rol);
-            request.setAttribute("estadoBusqueda", estado);
+            // No se pasa estadoBusqueda
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al buscar usuarios");
-            return;
+             System.err.println("Error al buscar usuarios: " + e.getMessage());
+             e.printStackTrace();
+             request.setAttribute("mensaje", "❌ Error del sistema al realizar la búsqueda.");
+             request.setAttribute("tipoMensaje", "error");
+             request.setAttribute("usuarios", new ArrayList<UsuarioSistema>());
         }
 
-        request.getRequestDispatcher("BuscarUsuarios.jsp").forward(request, response);
+        request.getRequestDispatcher(vista).forward(request, response);
     }
 
     /**
-     * Obtiene el perfil completo del usuario actual
+     * Obtiene y muestra el perfil del usuario logueado (GET request)
      */
     private void obtenerPerfilUsuario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+         String vista = "PerfilUsuario.jsp";
         try {
             HttpSession session = request.getSession(false);
-            if (session == null) {
-                response.sendRedirect("Login.jsp");
-                return;
+            if (session == null || session.getAttribute("usuarioLogueado") == null) {
+                response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=sesion_expirada"); return;
             }
 
-            UsuarioSistema usuarioLogueado = (UsuarioSistema) session.getAttribute("usuarioLogueado");
-            if (usuarioLogueado == null) {
-                response.sendRedirect("Login.jsp");
-                return;
-            }
+             String actualizado = request.getParameter("actualizado");
+             String passwordCambiada = request.getParameter("passwordCambiada");
+             if ("exito".equals(actualizado)) {
+                  request.setAttribute("mensaje", "✅ Perfil actualizado correctamente.");
+                  request.setAttribute("tipoMensaje", "exito");
+             } else if ("exito".equals(passwordCambiada)) {
+                  request.setAttribute("mensaje", "✅ Contraseña cambiada correctamente.");
+                  request.setAttribute("tipoMensaje", "exito");
+             }
 
-            // Obtener información adicional del perfil
+             UsuarioSistema usuarioLogueadoSesion = (UsuarioSistema) session.getAttribute("usuarioLogueado");
             UsuarioSistemaDao dao = new UsuarioSistemaDao();
-            UsuarioSistema perfilCompleto = dao.obtenerPerfilCompleto(usuarioLogueado.getIdUsuario());
+            UsuarioSistema perfilCompleto = dao.obtenerPerfilCompleto(usuarioLogueadoSesion.getIdUsuario());
 
             if (perfilCompleto != null) {
                 request.setAttribute("perfilUsuario", perfilCompleto);
-                request.setAttribute("mensaje", "✅ Perfil cargado correctamente");
+                 session.setAttribute("usuarioLogueado", perfilCompleto);
+                 session.setAttribute("nombreUsuario", perfilCompleto.getNombre());
+                 session.setAttribute("emailUsuario", perfilCompleto.getEmail());
             } else {
-                request.setAttribute("mensaje", "❌ Error al cargar el perfil");
+                 System.err.println("Error crítico: No se encontró el perfil del usuario ID " + usuarioLogueadoSesion.getIdUsuario());
+                 session.invalidate();
+                 response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=error_perfil"); return;
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al obtener perfil de usuario");
-            return;
+             System.err.println("Error al obtener perfil: " + e.getMessage());
+             e.printStackTrace();
+             request.setAttribute("mensaje", "❌ Error del sistema al cargar el perfil.");
+             request.setAttribute("tipoMensaje", "error");
         }
-
-        request.getRequestDispatcher("PerfilUsuario.jsp").forward(request, response);
+         request.getRequestDispatcher(vista).forward(request, response);
     }
 
     /**
-     * Elimina un usuario del sistema (solo administradores)
+     * Elimina un usuario (acción POST)
      */
     private void eliminarUsuario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+         String vistaRedirect = request.getContextPath() + "/UsuarioSistemaControlador?accion=listar";
         try {
-            // Verificar permisos
             HttpSession session = request.getSession(false);
-            if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
-                request.setAttribute("mensaje", "❌ No tiene permisos para eliminar usuarios");
-                response.sendRedirect("Menu.jsp");
-                return;
+             if (session == null || !"ADMIN".equalsIgnoreCase((String) session.getAttribute("rolUsuario"))) { // Compara con ADMIN
+                 response.sendRedirect(request.getContextPath() + "/Menu.jsp?mensaje=permiso_denegado"); return;
             }
 
             String idUsuarioStr = limpiarParametro(request.getParameter("idUsuario"));
 
             if (idUsuarioStr.isEmpty()) {
-                request.setAttribute("mensaje", "❌ ID de usuario requerido");
-                listarUsuarios(request, response);
-                return;
+                 response.sendRedirect(vistaRedirect + "&error=id_eliminar_faltante"); return;
             }
 
             int idUsuario = Integer.parseInt(idUsuarioStr);
-            
-            // Validar que no se elimine a sí mismo
             Integer idUsuarioLogueado = (Integer) session.getAttribute("idUsuario");
-            if (idUsuario == idUsuarioLogueado) {
+
+            if (idUsuarioLogueado != null && idUsuario == idUsuarioLogueado) { // Verifica nulidad
+                 response.sendRedirect(vistaRedirect + "&error=auto_eliminar"); return;
+            }
+
+            UsuarioSistemaDao dao = new UsuarioSistemaDao();
+            boolean exito = dao.eliminarUsuario(idUsuario);
+
+            if (exito) {
+                response.sendRedirect(vistaRedirect + "&eliminado=exito&id=" + idUsuario);
+            } else {
+                 response.sendRedirect(vistaRedirect + "&error=db_fallo_eliminar");
+            }
+
+        } catch (NumberFormatException e) {
+             response.sendRedirect(vistaRedirect + "&error=id_eliminar_invalido");
+        } catch (Exception e) {
+             System.err.println("Error al eliminar usuario: " + e.getMessage());
+             e.printStackTrace();
+             response.sendRedirect(vistaRedirect + "&error=sistema_eliminar");
+        }
+    }
+
+    /**
+     * Muestra el formulario de creación de usuarios (acción GET)
+     */
+    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null || !"ADMIN".equalsIgnoreCase((String) session.getAttribute("rolUsuario"))) { // Compara con ADMIN
+                 response.sendRedirect(request.getContextPath() + "/Menu.jsp?mensaje=permiso_denegado"); return;
+            }
+             request.getRequestDispatcher("CrearUsuario.jsp").forward(request, response);
+        } catch (Exception e) {
+             manejarErrorGeneral(request, response, e, "Error al mostrar formulario de creación");
+        }
+    }
+
+
+    /**
+     * Valida formato de email
+     */
+    private boolean esEmailValido(String email) {
+        if (email == null) return false;
         String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
         return Pattern.matches(emailPattern, email);
     }
@@ -629,60 +665,67 @@ public class UsuarioSistemaControlador extends HttpServlet {
      * Validar fortaleza de contraseña
      */
     private boolean esPasswordSeguro(String password) {
+         if (password == null) return false;
         return password.length() >= 8 &&
-               password.matches(".*[A-Z].*") &&  // Al menos una mayúscula
-               password.matches(".*[a-z].*") &&  // Al menos una minúscula
-               password.matches(".*\\d.*");      // Al menos un número
+               password.matches(".*[A-Z].*") &&
+               password.matches(".*[a-z].*") &&
+               password.matches(".*\\d.*");
     }
 
     /**
      * Encriptar contraseña usando SHA-256
      */
     private String encriptarPassword(String password) throws Exception {
+         if (password == null) {
+             throw new IllegalArgumentException("La contraseña no puede ser nula");
+         }
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] hashedPassword = md.digest(password.getBytes("UTF-8"));
-        
-        StringBuilder sb = new StringBuilder();
+
+        StringBuilder sb = new StringBuilder(hashedPassword.length * 2);
         for (byte b : hashedPassword) {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
     }
 
-    /**
-     * Manejo centralizado de errores
+     /**
+     * Manejo de errores que deben devolver al usuario a una VISTA específica (JSP)
+     * conservando datos del formulario si es posible. Usa FORWARD.
      */
-    private void manejarError(HttpServletRequest request, HttpServletResponse response, 
-                             Exception e, String mensajeContexto) 
+    private void manejarErrorVista(HttpServletRequest request, HttpServletResponse response,
+                                  String vista, String mensaje)
             throws ServletException, IOException {
-        
-        System.err.println("=== ERROR EN USUARIO SISTEMA CONTROLADOR ===");
+        System.err.println("Error en Controlador Usuario: " + mensaje);
+        request.setAttribute("mensaje", mensaje);
+        request.setAttribute("tipoMensaje", "error");
+         // Conservar datos del formulario (ejemplo para registro)
+         if ("CrearUsuario.jsp".equals(vista) || "RegistrarUsuario.jsp".equals(vista)) {
+             request.setAttribute("nombrePrevio", request.getParameter("nombre"));
+             request.setAttribute("emailPrevio", request.getParameter("email"));
+             request.setAttribute("rolPrevio", request.getParameter("rol"));
+         }
+        request.getRequestDispatcher(vista).forward(request, response);
+    }
+
+
+    /**
+     * Manejo centralizado de errores GENERALES del sistema. Usa REDIRECT a una página
+     * de error o al login.
+     */
+    private void manejarErrorGeneral(HttpServletRequest request, HttpServletResponse response,
+                             Exception e, String mensajeContexto)
+            throws ServletException, IOException {
+
+        System.err.println("=== ERROR GRAVE EN USUARIO SISTEMA CONTROLADOR ===");
         System.err.println("Contexto: " + mensajeContexto);
-        System.err.println("Mensaje: " + e.getMessage());
+        System.err.println("Mensaje Excepción: " + e.getMessage());
         e.printStackTrace();
 
-        request.setAttribute("mensaje", "❌ " + mensajeContexto + ": " + e.getMessage());
-        request.setAttribute("tipoMensaje", "error");
-        
-        request.getRequestDispatcher("Login.jsp").forward(request, response);
+         // Redirigir a login con mensaje de error genérico
+        response.sendRedirect(request.getContextPath() + "/Login.jsp?mensaje=error_inesperado");
     }
 
-    /**
-     * Muestra el formulario de creación de usuarios
-     */
-    private void mostrarFormularioCreacion(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        // Verificar permisos
-        HttpSession session = request.getSession(false);
-        if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
-            request.setAttribute("mensaje", "❌ No tiene permisos para crear usuarios");
-            response.sendRedirect("Menu.jsp");
-            return;
-        }
-        
-        // Solo mostrar el formulario limpio
-        request.getRequestDispatcher("CrearUsuario.jsp").forward(request, response);
-    }
 
     /**
      * Método auxiliar para limpiar parámetros
@@ -694,6 +737,7 @@ public class UsuarioSistemaControlador extends HttpServlet {
         return param.trim();
     }
 
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -709,5 +753,6 @@ public class UsuarioSistemaControlador extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Controlador para gestión completa de usuarios del sistema";
-    }
+    }// </editor-fold>
+
 }
