@@ -192,25 +192,21 @@ public class GroomerControlador extends HttpServlet {
             boolean exito = dao.actualizarGroomer(groomer);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Groomer actualizado con éxito");
-                // Recargar datos
-                List<Groomer> groomers = dao.obtenerGroomers();
-                for (Groomer g : groomers) {
-                    if (g.getIdGroomer() == idGroomer) {
-                        request.setAttribute("groomer", g);
-                        break;
-                    }
-                }
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/GroomerControlador?accion=listar&actualizado=exito&id=" + idGroomer);
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar groomer");
+                request.getRequestDispatcher("ActualizarGroomer.jsp").forward(request, response);
+                return;
             }
 
         } catch (Exception e) {
             System.out.println("❌ Error: " + e.getMessage());
             request.setAttribute("mensaje", "❌ Error: " + e.getMessage());
+            request.getRequestDispatcher("ActualizarGroomer.jsp").forward(request, response);
+            return;
         }
-
-        request.getRequestDispatcher("ActualizarGroomer.jsp").forward(request, response);
     }
 
 // MÉTODO: Listar todos los groomers
