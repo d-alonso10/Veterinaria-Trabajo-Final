@@ -528,61 +528,6 @@ public class UsuarioSistemaControlador extends HttpServlet {
             String nuevoEstado = limpiarParametro(request.getParameter("estado"));
 
             if (idUsuarioStr.isEmpty() || nuevoEstado.isEmpty()) {
-                request.setAttribute("mensaje", "❌ ID de usuario y estado son requeridos");
-                listarUsuarios(request, response);
-                return;
-            }
-
-            int idUsuario = Integer.parseInt(idUsuarioStr);
-            
-            // Validar que no se desactive a sí mismo
-            Integer idUsuarioLogueado = (Integer) session.getAttribute("idUsuario");
-            if (idUsuario == idUsuarioLogueado && "INACTIVO".equals(nuevoEstado)) {
-                request.setAttribute("mensaje", "❌ No puede desactivar su propia cuenta");
-                listarUsuarios(request, response);
-                return;
-            }
-
-            UsuarioSistemaDao dao = new UsuarioSistemaDao();
-            boolean exito = dao.cambiarEstadoUsuario(idUsuario, nuevoEstado);
-
-            if (exito) {
-                String accion = "ACTIVO".equals(nuevoEstado) ? "activado" : "desactivado";
-                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
-                response.sendRedirect(request.getContextPath() + "/UsuarioSistemaControlador?accion=listar&estadoCambiado=exito&usuarioAccion=" + accion);
-                return;
-            } else {
-                // En caso de error, mantener la lista y mostrar el mensaje
-                request.setAttribute("mensaje", "❌ Error al cambiar el estado del usuario");
-                request.setAttribute("tipoMensaje", "error");
-                listarUsuarios(request, response);
-                return;
-            }
-
-        } catch (NumberFormatException e) {
-            request.setAttribute("mensaje", "❌ ID de usuario inválido");
-            listarUsuarios(request, response);
-            return;
-        } catch (Exception e) {
-            manejarError(request, response, e, "Error al cambiar estado de usuario");
-            return;
-        }
-    }
-
-    /**
-     * Busca usuarios por diferentes criterios
-     */
-    private void buscarUsuarios(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        try {
-            // Verificar permisos
-            HttpSession session = request.getSession(false);
-            if (session == null || !"ADMINISTRADOR".equals(session.getAttribute("rolUsuario"))) {
-                request.setAttribute("mensaje", "❌ No tiene permisos para buscar usuarios");
-                response.sendRedirect("Menu.jsp");
-                return;
-            }
-
             String termino = limpiarParametro(request.getParameter("termino"));
             String rol = limpiarParametro(request.getParameter("rol"));
             String estado = limpiarParametro(request.getParameter("estado"));
@@ -676,36 +621,6 @@ public class UsuarioSistemaControlador extends HttpServlet {
             // Validar que no se elimine a sí mismo
             Integer idUsuarioLogueado = (Integer) session.getAttribute("idUsuario");
             if (idUsuario == idUsuarioLogueado) {
-                request.setAttribute("mensaje", "❌ No puede eliminar su propia cuenta");
-                listarUsuarios(request, response);
-                return;
-            }
-
-            UsuarioSistemaDao dao = new UsuarioSistemaDao();
-            boolean exito = dao.eliminarUsuario(idUsuario);
-
-            if (exito) {
-                request.setAttribute("mensaje", "✅ Usuario eliminado exitosamente");
-                request.setAttribute("tipoMensaje", "success");
-            } else {
-                request.setAttribute("mensaje", "❌ Error al eliminar el usuario");
-                request.setAttribute("tipoMensaje", "error");
-            }
-
-        } catch (NumberFormatException e) {
-            request.setAttribute("mensaje", "❌ ID de usuario inválido");
-        } catch (Exception e) {
-            manejarError(request, response, e, "Error al eliminar usuario");
-            return;
-        }
-
-        listarUsuarios(request, response);
-    }
-
-    /**
-     * Validar formato de email
-     */
-    private boolean esEmailValido(String email) {
         String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
         return Pattern.matches(emailPattern, email);
     }

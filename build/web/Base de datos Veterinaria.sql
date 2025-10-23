@@ -1,7 +1,7 @@
 -- ============================================================
 -- BASE DE DATOS: Veterinaria Terán Vet - Gestión Grooming
 -- Motor: MySQL 8.x
--- Autor: Diego, Juanpablo y Melanie
+-- Script de Estructura Limpia (para MySQL Workbench)
 -- ============================================================
 
 DROP DATABASE IF EXISTS vet_teran;
@@ -98,6 +98,7 @@ CREATE TABLE cita (
     CONSTRAINT fk_cita_mascota FOREIGN KEY (id_mascota) REFERENCES mascota(id_mascota),
     CONSTRAINT fk_cita_cliente FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
     CONSTRAINT fk_cita_servicio FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio)
+    -- Nota: id_sucursal es FK pero se añade en la tabla sucursal
 );
 
 CREATE TABLE atencion (
@@ -121,6 +122,7 @@ CREATE TABLE atencion (
     CONSTRAINT fk_atencion_mascota FOREIGN KEY (id_mascota) REFERENCES mascota(id_mascota),
     CONSTRAINT fk_atencion_cliente FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
     CONSTRAINT fk_atencion_groomer FOREIGN KEY (id_groomer) REFERENCES groomer(id_groomer)
+    -- Nota: id_sucursal es FK pero se añade en la tabla sucursal
 );
 
 CREATE TABLE detalle_servicio (
@@ -134,6 +136,7 @@ CREATE TABLE detalle_servicio (
     observaciones TEXT,
     CONSTRAINT fk_detalle_atencion FOREIGN KEY (id_atencion) REFERENCES atencion(id_atencion),
     CONSTRAINT fk_detalle_servicio FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio)
+    -- Nota: descuento_id es FK pero se añade en la tabla promocion
 );
 
 -- =========================
@@ -238,3 +241,4 @@ CREATE TABLE configuracion_estimacion (
     CONSTRAINT fk_conf_servicio FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio),
     CONSTRAINT fk_conf_groomer FOREIGN KEY (id_groomer) REFERENCES groomer(id_groomer)
 );
+

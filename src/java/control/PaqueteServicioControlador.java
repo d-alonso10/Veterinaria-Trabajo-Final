@@ -320,6 +320,13 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             int idPaquete = Integer.parseInt(idPaqueteStr);
 
+            // Verificar si viene de una eliminación exitosa de servicio
+            String servicioEliminado = request.getParameter("servicioEliminado");
+            if ("exito".equals(servicioEliminado)) {
+                request.setAttribute("mensaje", "✅ Servicio eliminado del paquete exitosamente");
+                request.setAttribute("tipoMensaje", "exito");
+            }
+
             PaqueteServicioDao dao = new PaqueteServicioDao();
             PaqueteServicio paquete = dao.obtenerPaquetePorId(idPaquete);
 
@@ -344,10 +351,14 @@ public class PaqueteServicioControlador extends HttpServlet {
                         valorIndividual > 0 ? ((valorIndividual - paquete.getPrecioTotal()) / valorIndividual) * 100 : 0);
                 } else {
                     request.setAttribute("serviciosPaquete", null);
-                    request.setAttribute("mensaje", "⚠️ Este paquete no tiene servicios asociados");
+                    if (!"exito".equals(servicioEliminado)) {
+                        request.setAttribute("mensaje", "⚠️ Este paquete no tiene servicios asociados");
+                    }
                 }
 
-                request.setAttribute("mensaje", "✅ Detalle del paquete cargado correctamente");
+                if (!"exito".equals(servicioEliminado)) {
+                    request.setAttribute("mensaje", "✅ Detalle del paquete cargado correctamente");
+                }
             } else {
                 request.setAttribute("mensaje", "❌ Paquete no encontrado");
             }
@@ -498,16 +509,17 @@ public class PaqueteServicioControlador extends HttpServlet {
             boolean exito = dao.eliminarServicioPaquete(idPaquete, idServicio);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Servicio eliminado del paquete exitosamente");
-                request.setAttribute("tipoMensaje", "success");
+                // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=obtenerDetalle&idPaquete=" + idPaquete + "&servicioEliminado=exito");
+                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al eliminar el servicio del paquete");
                 request.setAttribute("tipoMensaje", "error");
+                // Recargar el detalle del paquete
+                request.setAttribute("idPaquete", idPaqueteStr);
+                obtenerDetallePaquete(request, response);
+                return;
             }
-
-            // Recargar el detalle del paquete
-            request.setAttribute("idPaquete", idPaqueteStr);
-            obtenerDetallePaquete(request, response);
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ IDs proporcionados inválidos");
