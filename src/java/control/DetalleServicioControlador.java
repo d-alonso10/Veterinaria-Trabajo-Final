@@ -44,10 +44,12 @@ public class DetalleServicioControlador extends HttpServlet {
                         buscarServiciosDisponibles(request, response);
                         break;
                     default:
-                        response.sendRedirect("ColaAtencion.jsp");
+                        // Redirección segura con context path
+                        response.sendRedirect(request.getContextPath() + "/ColaAtencion.jsp");
                 }
             } else {
-                response.sendRedirect("ColaAtencion.jsp");
+                 // Redirección segura con context path
+                response.sendRedirect(request.getContextPath() + "/ColaAtencion.jsp");
             }
         } catch (Exception e) {
             manejarError(request, response, e, "Error general en el controlador de detalles de servicio");
@@ -59,6 +61,10 @@ public class DetalleServicioControlador extends HttpServlet {
      */
     private void agregarServicioAtencion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        String vistaError = "CrearAtencionDesdeCita.jsp"; // Vista del formulario para mostrar errores
+        int idAtencion = 0; // Para la redirección
+        
         try {
             // Obtener y validar parámetros
             String idAtencionStr = limpiarParametro(request.getParameter("idAtencion"));
@@ -71,12 +77,12 @@ public class DetalleServicioControlador extends HttpServlet {
             // Validaciones básicas
             if (idAtencionStr.isEmpty() || idServicioStr.isEmpty() || cantidadStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ Atención, servicio y cantidad son obligatorios");
-                request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+                request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
 
             // Conversión de tipos con validación
-            int idAtencion, idServicio, cantidad, descuentoId = 0;
+            int idServicio, cantidad, descuentoId = 0;
             double precioUnitario;
 
             try {
@@ -93,9 +99,11 @@ public class DetalleServicioControlador extends HttpServlet {
                     ServicioDao servicioDao = new ServicioDao();
                     Servicio servicio = servicioDao.obtenerServicioPorId(idServicio);
                     if (servicio != null) {
-                        precioUnitario = servicio.getPrecio();
+                        // ****** INICIO DE CORRECCIÓN DE BUG ******
+                        precioUnitario = servicio.getPrecio_base(); // El método correcto es getPrecio_base()
+                        // ****** FIN DE CORRECCIÓN DE BUG ******
                     } else {
-                        throw new Exception("Servicio no encontrado");
+                        throw new Exception("Servicio no encontrado con ID: " + idServicio);
                     }
                 } else {
                     precioUnitario = Double.parseDouble(precioUnitarioStr);
@@ -104,23 +112,23 @@ public class DetalleServicioControlador extends HttpServlet {
                 // Validaciones de negocio
                 if (cantidad <= 0) {
                     request.setAttribute("mensaje", "❌ La cantidad debe ser mayor a cero");
-                    request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+                    request.getRequestDispatcher(vistaError).forward(request, response);
                     return;
                 }
 
                 if (precioUnitario < 0) {
                     request.setAttribute("mensaje", "❌ El precio no puede ser negativo");
-                    request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+                    request.getRequestDispatcher(vistaError).forward(request, response);
                     return;
                 }
 
             } catch (NumberFormatException e) {
                 request.setAttribute("mensaje", "❌ Error en los datos numéricos proporcionados");
-                request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+                request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
 
-            // Crear objeto DetallServicio
+            // Crear objeto DetalleServicio
             DetalleServicio detalle = new DetalleServicio();
             detalle.setIdAtencion(idAtencion);
             detalle.setIdServicio(idServicio);
@@ -134,19 +142,24 @@ public class DetalleServicioControlador extends HttpServlet {
             boolean exito = dao.agregarServicioAtencion(detalle);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Servicio agregado exitosamente a la atención");
-                // Recargar la lista de servicios para mostrar el nuevo servicio
-                listarDetallesAtencionInterno(request, idAtencion);
+                // ****** INICIO DE CORRECCIÓN PRG ******
+                // Redirige a la lista de detalles de esa atención
+                response.sendRedirect(request.getContextPath() + "/DetalleServicioControlador?accion=listar&idAtencion=" + idAtencion + "&agregado=exito");
+                return; // Importante
+                // ****** FIN DE CORRECCIÓN PRG ******
             } else {
                 request.setAttribute("mensaje", "❌ Error al agregar el servicio a la atención");
             }
 
         } catch (Exception e) {
-            manejarError(request, response, e, "Error al agregar servicio a la atención");
+            // Si el error ocurre, intentar mostrar el error en el formulario original
+            request.setAttribute("mensaje", "❌ Error al agregar servicio: " + e.getMessage());
+            request.getRequestDispatcher(vistaError).forward(request, response);
             return;
         }
 
-        request.getRequestDispatcher("CrearAtencionDesdeCita.jsp").forward(request, response);
+        // Forward solo si la inserción falló (exito == false)
+        request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
     /**
@@ -154,6 +167,9 @@ public class DetalleServicioControlador extends HttpServlet {
      */
     private void listarDetallesAtencion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        String vistaDestino = "DetalleServiciosAtencion.jsp";
+        
         try {
             String idAtencionStr = limpiarParametro(request.getParameter("idAtencion"));
             
@@ -162,9 +178,21 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.getRequestDispatcher("ColaAtencion.jsp").forward(request, response);
                 return;
             }
+            
+            // Manejar mensajes de éxito de acciones PRG
+            if ("exito".equals(request.getParameter("agregado"))) {
+                request.setAttribute("mensaje", "✅ Servicio agregado exitosamente.");
+                request.setAttribute("tipoMensaje", "exito");
+            } else if ("exito".equals(request.getParameter("eliminado"))) {
+                request.setAttribute("mensaje", "✅ Servicio eliminado exitosamente.");
+                request.setAttribute("tipoMensaje", "exito");
+            } else if ("exito".equals(request.getParameter("actualizado"))) {
+                request.setAttribute("mensaje", "✅ Detalle de servicio actualizado exitosamente.");
+                request.setAttribute("tipoMensaje", "exito");
+            }
 
             int idAtencion = Integer.parseInt(idAtencionStr);
-            listarDetallesAtencionInterno(request, idAtencion);
+            listarDetallesAtencionInterno(request, idAtencion); // Carga los datos en el request
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de atención inválido");
@@ -175,7 +203,7 @@ public class DetalleServicioControlador extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("DetalleServiciosAtencion.jsp").forward(request, response);
+        request.getRequestDispatcher(vistaDestino).forward(request, response);
     }
 
     /**
@@ -200,7 +228,9 @@ public class DetalleServicioControlador extends HttpServlet {
                 request.setAttribute("detallesServicios", null);
                 request.setAttribute("totalServicios", 0);
                 request.setAttribute("totalAtencion", 0.0);
-                request.setAttribute("mensaje", "ℹ️ No hay servicios registrados para esta atención");
+                if (request.getAttribute("mensaje") == null) { // No sobreescribir mensajes de éxito
+                    request.setAttribute("mensaje", "ℹ️ No hay servicios registrados para esta atención");
+                }
             }
 
             request.setAttribute("idAtencionConsulta", idAtencion);
@@ -216,9 +246,13 @@ public class DetalleServicioControlador extends HttpServlet {
      */
     private void eliminarDetalleServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        String idAtencionStr = limpiarParametro(request.getParameter("idAtencion")); // Capturar para la redirección
+        int idAtencion = 0;
+        String vistaError = "DetalleServiciosAtencion.jsp"; // Volver a la lista en caso de error
+        
         try {
             String idDetalleStr = limpiarParametro(request.getParameter("idDetalle"));
-            String idAtencionStr = limpiarParametro(request.getParameter("idAtencion"));
 
             if (idDetalleStr.isEmpty() || idAtencionStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ ID de detalle e ID de atención son requeridos");
@@ -227,15 +261,16 @@ public class DetalleServicioControlador extends HttpServlet {
             }
 
             int idDetalle = Integer.parseInt(idDetalleStr);
-            int idAtencion = Integer.parseInt(idAtencionStr);
+            idAtencion = Integer.parseInt(idAtencionStr);
 
             DetalleServicioDao dao = new DetalleServicioDao();
             boolean exito = dao.eliminarDetalleServicio(idDetalle);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Servicio eliminado de la atención exitosamente");
-                // Recargar lista actualizada
-                listarDetallesAtencionInterno(request, idAtencion);
+                // ****** INICIO DE CORRECCIÓN PRG ******
+                response.sendRedirect(request.getContextPath() + "/DetalleServicioControlador?accion=listar&idAtencion=" + idAtencion + "&eliminado=exito");
+                return; // Importante
+                // ****** FIN DE CORRECCIÓN PRG ******
             } else {
                 request.setAttribute("mensaje", "❌ Error al eliminar el servicio de la atención");
             }
@@ -247,7 +282,9 @@ public class DetalleServicioControlador extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("DetalleServiciosAtencion.jsp").forward(request, response);
+        // Forward solo si falla la eliminación (exito == false)
+        listarDetallesAtencionInterno(request, idAtencion); // Recargar datos para la vista de error
+        request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
     /**
@@ -255,17 +292,22 @@ public class DetalleServicioControlador extends HttpServlet {
      */
     private void actualizarDetalleServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        String idAtencionStr = limpiarParametro(request.getParameter("idAtencion")); // Capturar para redirección
+        int idAtencion = 0;
+        String vistaError = "DetalleServiciosAtencion.jsp"; // Volver a la lista en caso de error
+
         try {
             String idDetalleStr = limpiarParametro(request.getParameter("idDetalle"));
             String cantidadStr = limpiarParametro(request.getParameter("cantidad"));
             String precioUnitarioStr = limpiarParametro(request.getParameter("precioUnitario"));
             String observaciones = limpiarParametro(request.getParameter("observaciones"));
-            String idAtencionStr = limpiarParametro(request.getParameter("idAtencion"));
+            
 
             // Validaciones básicas
-            if (idDetalleStr.isEmpty() || cantidadStr.isEmpty() || precioUnitarioStr.isEmpty()) {
-                request.setAttribute("mensaje", "❌ ID detalle, cantidad y precio son obligatorios");
-                request.getRequestDispatcher("DetalleServiciosAtencion.jsp").forward(request, response);
+            if (idDetalleStr.isEmpty() || cantidadStr.isEmpty() || precioUnitarioStr.isEmpty() || idAtencionStr.isEmpty()) {
+                request.setAttribute("mensaje", "❌ ID detalle, ID atención, cantidad y precio son obligatorios");
+                request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
 
@@ -273,12 +315,12 @@ public class DetalleServicioControlador extends HttpServlet {
             int idDetalle = Integer.parseInt(idDetalleStr);
             int cantidad = Integer.parseInt(cantidadStr);
             double precioUnitario = Double.parseDouble(precioUnitarioStr);
-            int idAtencion = Integer.parseInt(idAtencionStr);
+            idAtencion = Integer.parseInt(idAtencionStr);
 
             // Validaciones de negocio
             if (cantidad <= 0 || precioUnitario < 0) {
                 request.setAttribute("mensaje", "❌ Cantidad debe ser mayor a 0 y precio no negativo");
-                request.getRequestDispatcher("DetalleServiciosAtencion.jsp").forward(request, response);
+                request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
 
@@ -286,8 +328,10 @@ public class DetalleServicioControlador extends HttpServlet {
             boolean exito = dao.actualizarDetalleServicio(idDetalle, cantidad, precioUnitario, observaciones);
 
             if (exito) {
-                request.setAttribute("mensaje", "✅ Detalle de servicio actualizado exitosamente");
-                listarDetallesAtencionInterno(request, idAtencion);
+                // ****** INICIO DE CORRECCIÓN PRG ******
+                response.sendRedirect(request.getContextPath() + "/DetalleServicioControlador?accion=listar&idAtencion=" + idAtencion + "&actualizado=exito");
+                return; // Importante
+                // ****** FIN DE CORRECCIÓN PRG ******
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar el detalle de servicio");
             }
@@ -299,7 +343,9 @@ public class DetalleServicioControlador extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("DetalleServiciosAtencion.jsp").forward(request, response);
+        // Forward solo si falla la actualización (exito == false)
+        listarDetallesAtencionInterno(request, idAtencion); // Recargar datos para la vista de error
+        request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
     /**
@@ -352,6 +398,7 @@ public class DetalleServicioControlador extends HttpServlet {
         request.setAttribute("mensaje", "❌ " + mensajeContexto + ": " + e.getMessage());
         request.setAttribute("tipoMensaje", "error");
         
+        // Redirigir a una vista genérica o de cola, ya que el error puede ser grave
         request.getRequestDispatcher("ColaAtencion.jsp").forward(request, response);
     }
 
