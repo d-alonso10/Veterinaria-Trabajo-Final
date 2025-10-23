@@ -227,7 +227,7 @@ public class MascotaControlador extends HttpServlet {
             }
 
             MascotaDao dao = new MascotaDao();
-            List<modelo.MascotaClienteDTO> mascotas = dao.buscarMascotas("");
+            List<modelo.MascotaBusquedaDTO> mascotas = dao.buscarMascotas("");
 
             request.setAttribute("mascotas", mascotas);
             request.setAttribute("totalMascotas", mascotas != null ? mascotas.size() : 0);
