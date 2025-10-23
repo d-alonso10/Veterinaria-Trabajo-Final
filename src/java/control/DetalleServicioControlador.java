@@ -99,9 +99,9 @@ public class DetalleServicioControlador extends HttpServlet {
                     ServicioDao servicioDao = new ServicioDao();
                     Servicio servicio = servicioDao.obtenerServicioPorId(idServicio);
                     if (servicio != null) {
-                        // ****** INICIO DE CORRECCIÓN (BUG + COHERENCIA) ******
+                        // ****** INICIO DE CORRECCIÓN (BUG) ******
                         precioUnitario = servicio.getPrecio_base(); // El método correcto es getPrecio_base()
-                        // ****** FIN DE CORRECCIÓN (BUG + COHERENCIA) ******
+                        // ****** FIN DE CORRECCIÓN (BUG) ******
                     } else {
                         throw new Exception("Servicio no encontrado con ID: " + idServicio);
                     }
@@ -134,9 +134,11 @@ public class DetalleServicioControlador extends HttpServlet {
             detalle.setIdServicio(idServicio);
             detalle.setCantidad(cantidad);
             detalle.setPrecioUnitario(precioUnitario);
+            
             // ****** INICIO CORRECCIÓN COHERENCIA (Observación) ******
-            detalle.setSubtotal(cantidad * precioUnitario); // Calcular subtotal
+            detalle.setSubtotal(cantidad * precioUnitario); // Calcular subtotal para el objeto
             // ****** FIN CORRECCIÓN COHERENCIA ******
+            
             detalle.setDescuentoId(descuentoId);
             detalle.setObservaciones(observaciones);
 
@@ -311,6 +313,7 @@ public class DetalleServicioControlador extends HttpServlet {
             // Validaciones básicas
             if (idDetalleStr.isEmpty() || cantidadStr.isEmpty() || precioUnitarioStr.isEmpty() || idAtencionStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ ID detalle, ID atención, cantidad y precio son obligatorios");
+                listarDetallesAtencionInterno(request, Integer.parseInt(idAtencionStr)); // Recargar datos antes del forward
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
@@ -324,14 +327,10 @@ public class DetalleServicioControlador extends HttpServlet {
             // Validaciones de negocio
             if (cantidad <= 0 || precioUnitario < 0) {
                 request.setAttribute("mensaje", "❌ Cantidad debe ser mayor a 0 y precio no negativo");
+                listarDetallesAtencionInterno(request, idAtencion); // Recargar datos antes del forward
                 request.getRequestDispatcher(vistaError).forward(request, response);
                 return;
             }
-            
-            // ****** INICIO CORRECCIÓN COHERENCIA (Observación) ******
-            // Crear objeto DetalleServicio para pasar al DAO (aunque el DAO actualice campos específicos)
-            // El DAO espera cantidad, precio, observaciones.
-            // ****** FIN CORRECCIÓN COHERENCIA ******
 
             DetalleServicioDao dao = new DetalleServicioDao();
             boolean exito = dao.actualizarDetalleServicio(idDetalle, cantidad, precioUnitario, observaciones);
@@ -347,13 +346,14 @@ public class DetalleServicioControlador extends HttpServlet {
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Datos numéricos inválidos");
+            if (idAtencion > 0) listarDetallesAtencionInterno(request, idAtencion); // Recargar si es posible
         } catch (Exception e) {
             manejarError(request, response, e, "Error al actualizar detalle de servicio");
             return;
         }
 
         // Forward solo si falla la actualización (exito == false)
-        listarDetallesAtencionInterno(request, idAtencion); // Recargar datos para la vista de error
+        if (idAtencion > 0) listarDetallesAtencionInterno(request, idAtencion); // Recargar datos para la vista de error
         request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
