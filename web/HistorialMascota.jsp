@@ -890,13 +890,13 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Mascotas</span>
                     </a>
@@ -997,8 +997,8 @@
                         <p>Registro completo de servicios y atenciones de la mascota - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date()) %></p>
                     </div>
                     <div class="header-actions">
-                        <a href="Clientes.jsp" class="btn btn-primary">👥 Ver Clientes</a>
-                        <a href="ListaMascotas.jsp" class="btn btn-info">🐾 Ver Mascotas</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-primary">👥 Ver Clientes</a>
+                        <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-info">🐾 Ver Mascotas</a>
                     </div>
                 </div>
             </div>
@@ -1167,14 +1167,14 @@
                     <div class="empty-icon">📄</div>
                     <h3>No hay historial de atenciones</h3>
                     <p>Esta mascota no tiene registros de servicios o atenciones en el sistema.<br>Los registros aparecerán aquí cuando se realicen atenciones.</p>
-                    <a href="Clientes.jsp" class="btn btn-accent">👥 Buscar Otra Mascota</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-accent">👥 Buscar Otra Mascota</a>
                 </div>
                 <% } %>
 
                 <!-- Navegación -->
                 <div class="navigation">
-                    <a href="Clientes.jsp" class="btn btn-primary">👥 Ver Clientes</a>
-                    <a href="ListaMascotas.jsp" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-primary">👥 Ver Clientes</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
                     <a href="MascotasPorCliente.jsp" class="btn btn-warning">🔍 Ver Mascotas por Cliente</a>
                     <a href="dashboard.jsp" class="btn btn-secondary">📊 Ir al Dashboard</a>
                     <% if (historial != null && !historial.isEmpty()) { %>

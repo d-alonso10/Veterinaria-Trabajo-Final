@@ -870,13 +870,13 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
                 </li>
                 <li class="menu-item active">
-                    <a href="ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Mascotas</span>
                     </a>
@@ -1001,7 +1001,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <span>🔍 Buscar</span>
                             </button>
-                            <a href="ListaMascotas.jsp" class="btn btn-secondary">🔄 Ver Todas</a>
+                            <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-secondary">🔄 Ver Todas</a>
                         </div>
                     </form>
                 </div>
@@ -1119,7 +1119,7 @@
                 <div class="navigation">
                     <a href="InsertarMascota.jsp" class="btn btn-success">➕ Nueva Mascota</a>
                     <a href="Menu.jsp" class="btn btn-secondary">🏠 Menú Principal</a>
-                    <a href="Clientes.jsp" class="btn btn-primary">👥 Gestión de Clientes</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-primary">👥 Gestión de Clientes</a>
                     <a href="CitaControlador?accion=todasCitas" class="btn btn-warning">📅 Ver Citas</a>
                 </div>
             </div>

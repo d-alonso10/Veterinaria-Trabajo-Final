@@ -825,13 +825,13 @@
                 
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Mascotas</span>
                     </a>
@@ -922,7 +922,7 @@
                     </div>
                     <div class="header-actions">
                         <a href="InsertarCliente.jsp" class="btn btn-success">➕ Nuevo Cliente</a>
-                        <a href="Clientes.jsp" class="btn btn-info">👥 Todos los Clientes</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-info">👥 Todos los Clientes</a>
                     </div>
                 </div>
             </div>
@@ -1049,7 +1049,7 @@
                 <div class="navigation">
                     <a href="InsertarCliente.jsp" class="btn btn-success">➕ Nuevo Cliente</a>
                     <a href="ClienteControlador?accion=listarFrecuentes" class="btn btn-info">🏆 Clientes Frecuentes</a>
-                    <a href="Clientes.jsp" class="btn btn-primary">👥 Todos los Clientes</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-primary">👥 Todos los Clientes</a>
                     <a href="dashboard.jsp" class="btn btn-secondary">📊 Ir al Dashboard</a>
                 </div>
             </div>

@@ -824,7 +824,7 @@
                         <p>Complete el formulario para agregar un nuevo cliente al sistema - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date()) %></p>
                     </div>
                     <div class="header-actions">
-                        <a href="Clientes.jsp" class="btn btn-back">← Volver a Clientes</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-back">← Volver a Clientes</a>
                     </div>
                 </div>
             </div>
@@ -949,8 +949,8 @@
                 </div>
 
                 <div class="navigation">
-                    <a href="Clientes.jsp" class="btn btn-back">📋 Ver Todos los Clientes</a>
-                    <a href="ListaMascotas.jsp" class="btn btn-back">🐾 Gestionar Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-back">📋 Ver Todos los Clientes</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-back">🐾 Gestionar Mascotas</a>
                     <a href="CitaControlador?accion=todasCitas" class="btn btn-back">📅 Ver Citas</a>
                 </div>
             </div>

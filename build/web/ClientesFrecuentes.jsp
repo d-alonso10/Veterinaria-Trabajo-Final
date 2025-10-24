@@ -881,7 +881,7 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
@@ -970,7 +970,7 @@
                         <p>Clientes con mayor número de atenciones y gasto total</p>
                     </div>
                     <div class="header-actions">
-                        <a href="Clientes.jsp" class="btn btn-secondary">👥 Todos los Clientes</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-secondary">👥 Todos los Clientes</a>
                         <a href="InsertarCliente.jsp" class="btn btn-success">➕ Nuevo Cliente</a>
                     </div>
                 </div>

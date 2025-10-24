@@ -902,13 +902,13 @@
                 
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item active">
-                    <a href="<%= request.getContextPath() %>/Clientes.jsp">
+                    <a href=""<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="<%= request.getContextPath() %>/ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Mascotas</span>
                     </a>

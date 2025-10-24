@@ -815,7 +815,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
@@ -827,7 +827,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Todas las Mascotas</span>
                     </a>
@@ -918,7 +918,7 @@
                     </div>
                     <div class="header-actions">
                         <a href="InsertarMascota.jsp" class="btn btn-success">➕ Nueva Mascota</a>
-                        <a href="ListaMascotas.jsp" class="btn btn-info">🐾 Ver Todas</a>
+                        <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-info">🐾 Ver Todas</a>
                     </div>
                 </div>
             </div>
@@ -1060,8 +1060,8 @@
                 <!-- Navigation -->
                 <div class="navigation">
                     <a href="InsertarMascota.jsp" class="btn btn-success">➕ Nueva Mascota</a>
-                    <a href="ListaMascotas.jsp" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
-                    <a href="Clientes.jsp" class="btn btn-primary">👥 Gestión de Clientes</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-primary">👥 Gestión de Clientes</a>
                     <a href="dashboard.jsp" class="btn btn-secondary">📊 Ir al Dashboard</a>
                 </div>
             </div>

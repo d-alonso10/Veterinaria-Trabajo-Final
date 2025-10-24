@@ -639,7 +639,7 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>

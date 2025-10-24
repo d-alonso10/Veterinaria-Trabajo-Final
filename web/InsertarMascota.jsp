@@ -739,7 +739,7 @@
                 <!-- Gestión de Clientes -->
                 <div class="menu-section">Gestión de Clientes</div>
                 <li class="menu-item">
-                    <a href="Clientes.jsp">
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos">
                         <span class="menu-icon">👥</span>
                         <span>Clientes</span>
                     </a>
@@ -751,7 +751,7 @@
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="ListaMascotas.jsp">
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">
                         <span class="menu-icon">🐾</span>
                         <span>Mascotas</span>
                     </a>
@@ -846,8 +846,8 @@
                         <p>Complete el formulario para agregar una nueva mascota al sistema - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date()) %></p>
                     </div>
                     <div class="header-actions">
-                        <a href="Clientes.jsp" class="btn btn-secondary">👥 Volver a Clientes</a>
-                        <a href="ListaMascotas.jsp" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
+                        <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-secondary">👥 Volver a Clientes</a>
+                        <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
                     </div>
                 </div>
             </div>
@@ -975,8 +975,8 @@
                 </div>
 
                 <div class="navigation">
-                    <a href="Clientes.jsp" class="btn btn-secondary">👥 Ver Todos los Clientes</a>
-                    <a href="ListaMascotas.jsp" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/ClienteControlador?accion=listarTodos" class="btn btn-secondary">👥 Ver Todos los Clientes</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas" class="btn btn-info">🐾 Ver Todas las Mascotas</a>
                     <a href="MascotasPorCliente.jsp" class="btn btn-warning">🔍 Ver Mascotas por Cliente</a>
                     <a href="dashboard.jsp" class="btn btn-primary">📊 Ir al Dashboard</a>
                 </div>

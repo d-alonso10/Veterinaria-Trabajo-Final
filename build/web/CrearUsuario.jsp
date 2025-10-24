@@ -464,7 +464,7 @@
                 </li>
                 <li class="menu-item">
                     <span>🐕</span>
-                    <a href="ListaMascotas.jsp">Mascotas</a>
+                    <a href="<%= request.getContextPath() %>/MascotaControlador?accion=listarTodas">Mascotas</a>
                 </li>
                 <li class="menu-item">
                     <span>👨‍⚕️</span>
