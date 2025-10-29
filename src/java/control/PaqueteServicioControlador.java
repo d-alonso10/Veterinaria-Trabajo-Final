@@ -33,6 +33,7 @@ public class PaqueteServicioControlador extends HttpServlet {
                     case "agregarServicio":
                         agregarServicioAPaquete(request, response);
                         break;
+                    case "listar":
                     case "listarPaquetes":
                         listarPaquetesServicio(request, response);
                         break;
@@ -50,9 +51,6 @@ public class PaqueteServicioControlador extends HttpServlet {
                         break;
                     case "buscarPaquetes":
                         buscarPaquetesServicio(request, response);
-                        break;
-                    case "listar":
-                        listarPaquetesServicio(request, response);
                         break;
                     case "mostrarFormulario":
                         mostrarFormularioCreacion(request, response);
@@ -75,20 +73,20 @@ public class PaqueteServicioControlador extends HttpServlet {
             String descripcion = limpiarParametro(request.getParameter("descripcion"));
             String precioTotalStr = limpiarParametro(request.getParameter("precioTotal"));
 
-            if (nombre.isEmpty() || descripcion.isEmpty() || precioTotalStr.isEmpty()) {
+            // Validaciones básicas
+            if (nombre == null || nombre.trim().isEmpty() || 
+                descripcion == null || descripcion.trim().isEmpty() || 
+                precioTotalStr == null || precioTotalStr.trim().isEmpty()) {
                 request.setAttribute("mensaje", "❌ Nombre, descripción y precio total son obligatorios");
                 request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
                 return;
             }
 
-            if (nombre.length() < 3 || nombre.length() > 100) {
-                request.setAttribute("mensaje", "❌ El nombre debe tener entre 3 y 100 caracteres");
-                request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
-                return;
-            }
+            nombre = nombre.trim();
+            descripcion = descripcion.trim();
 
-            if (descripcion.length() > 500) {
-                request.setAttribute("mensaje", "❌ La descripción no puede exceder 500 caracteres");
+            if (nombre.length() < 2 || nombre.length() > 100) {
+                request.setAttribute("mensaje", "❌ El nombre debe tener entre 2 y 100 caracteres");
                 request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
                 return;
             }
@@ -97,11 +95,7 @@ public class PaqueteServicioControlador extends HttpServlet {
             try {
                 precioTotal = Double.parseDouble(precioTotalStr);
                 if (precioTotal <= 0) {
-                    throw new NumberFormatException("Precio debe ser positivo");
-                }
-                
-                if (precioTotal > 10000.00) {
-                    request.setAttribute("mensaje", "❌ El precio no puede exceder $10,000.00");
+                    request.setAttribute("mensaje", "❌ El precio debe ser mayor a cero");
                     request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
                     return;
                 }
@@ -111,6 +105,7 @@ public class PaqueteServicioControlador extends HttpServlet {
                 return;
             }
 
+            // Crear el paquete
             PaqueteServicio paquete = new PaqueteServicio();
             paquete.setNombre(nombre);
             paquete.setDescripcion(descripcion);
@@ -121,25 +116,18 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (idPaqueteCreado > 0) {
                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=listar&creado=exito&id=" + idPaqueteCreado);
-                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al crear el paquete de servicios");
-                request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
             }
 
         } catch (Exception e) {
             manejarError(request, response, e, "Error al crear paquete de servicios");
-            return;
         }
-
-        request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
     }
 
     private void agregarServicioAPaquete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        String vistaError = "AgregarServicioPaquete.jsp";
-        int idPaquete = 0;
         
         try {
             String idPaqueteStr = limpiarParametro(request.getParameter("idPaquete"));
@@ -148,59 +136,27 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (idPaqueteStr.isEmpty() || idServicioStr.isEmpty() || cantidadStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ Paquete, servicio y cantidad son obligatorios");
-                request.getRequestDispatcher(vistaError).forward(request, response);
+                request.getRequestDispatcher("AgregarServicioPaquete.jsp").forward(request, response);
                 return;
             }
 
-            int idServicio, cantidad;
-            try {
-                idPaquete = Integer.parseInt(idPaqueteStr);
-                idServicio = Integer.parseInt(idServicioStr);
-                cantidad = Integer.parseInt(cantidadStr);
+            int idPaquete = Integer.parseInt(idPaqueteStr);
+            int idServicio = Integer.parseInt(idServicioStr);
+            int cantidad = Integer.parseInt(cantidadStr);
 
-                if (idPaquete <= 0 || idServicio <= 0 || cantidad <= 0) {
-                    throw new NumberFormatException("Los valores deben ser positivos");
-                }
-
-                if (cantidad > 20) {
-                    request.setAttribute("mensaje", "❌ La cantidad no puede exceder 20 unidades por servicio");
-                    request.getRequestDispatcher(vistaError).forward(request, response);
-                    return;
-                }
-            } catch (NumberFormatException e) {
-                request.setAttribute("mensaje", "❌ IDs o cantidad inválidos");
-                request.getRequestDispatcher(vistaError).forward(request, response);
-                return;
-            }
-
-            // CORRECCIÓN: Verificar que el servicio existe buscándolo en la lista de servicios
-            ServicioDao servicioDao = new ServicioDao();
-            List<Servicio> servicios = servicioDao.obtenerServicios();
-            boolean servicioExiste = false;
-            for (Servicio servicio : servicios) {
-                if (servicio.getIdServicio() == idServicio) {
-                    servicioExiste = true;
-                    break;
-                }
-            }
-            
-            if (!servicioExiste) {
-                request.setAttribute("mensaje", "❌ Servicio no encontrado");
-                request.getRequestDispatcher(vistaError).forward(request, response);
-                return;
-            }
-
+            // Validar que el paquete existe
             PaqueteServicioDao paqueteDao = new PaqueteServicioDao();
             PaqueteServicio paquete = paqueteDao.obtenerPaquetePorId(idPaquete);
             if (paquete == null) {
-                request.setAttribute("mensaje", "❌ Paquete no encontrado");
-                request.getRequestDispatcher(vistaError).forward(request, response);
+                request.setAttribute("mensaje", "❌ El paquete especificado no existe");
+                request.getRequestDispatcher("AgregarServicioPaquete.jsp").forward(request, response);
                 return;
             }
 
+            // Validar que el servicio no esté ya en el paquete
             if (paqueteDao.servicioYaEnPaquete(idPaquete, idServicio)) {
                 request.setAttribute("mensaje", "❌ Este servicio ya está incluido en el paquete");
-                request.getRequestDispatcher(vistaError).forward(request, response);
+                request.getRequestDispatcher("AgregarServicioPaquete.jsp").forward(request, response);
                 return;
             }
 
@@ -213,27 +169,20 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (exito) {
                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=obtenerDetalle&idPaquete=" + idPaquete + "&agregado=exito");
-                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al agregar el servicio al paquete");
-                request.setAttribute("tipoMensaje", "error");
+                request.getRequestDispatcher("AgregarServicioPaquete.jsp").forward(request, response);
             }
 
         } catch (Exception e) {
-            if (idPaquete > 0) {
-                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=obtenerDetalle&idPaquete=" + idPaquete + "&error=sistema");
-                 return;
-            }
             manejarError(request, response, e, "Error al agregar servicio al paquete");
-            return;
         }
-        
-        request.getRequestDispatcher(vistaError).forward(request, response);
     }
 
     private void listarPaquetesServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Manejar mensajes de éxito
             String creado = request.getParameter("creado");
             String actualizado = request.getParameter("actualizado");
             String eliminado = request.getParameter("eliminado");
@@ -254,12 +203,14 @@ public class PaqueteServicioControlador extends HttpServlet {
             List<PaqueteServicio> paquetes = dao.listarPaquetesServicio();
 
             if (paquetes != null && !paquetes.isEmpty()) {
-                request.setAttribute("paquetesServicio", paquetes);
+                request.setAttribute("paquetes", paquetes);
                 request.setAttribute("totalPaquetes", paquetes.size());
 
+                // Calcular estadísticas básicas
                 double precioMinimo = Double.MAX_VALUE;
                 double precioMaximo = 0.0;
                 double promedioPrecios = 0.0;
+                int paquetesActivos = paquetes.size(); // Asumimos que todos están activos
 
                 for (PaqueteServicio paquete : paquetes) {
                     double precio = paquete.getPrecioTotal();
@@ -268,21 +219,25 @@ public class PaqueteServicioControlador extends HttpServlet {
                     promedioPrecios += precio;
                 }
 
-                if (paquetes.size() > 0) {
-                    promedioPrecios /= paquetes.size();
-                    request.setAttribute("precioMinimo", precioMinimo);
-                    request.setAttribute("precioMaximo", precioMaximo);
-                    request.setAttribute("promedioPrecios", promedioPrecios);
-                }
+                promedioPrecios = paquetes.size() > 0 ? promedioPrecios / paquetes.size() : 0;
+
+                request.setAttribute("precioMinimo", String.format("%.2f", precioMinimo));
+                request.setAttribute("precioMaximo", String.format("%.2f", precioMaximo));
+                request.setAttribute("promedioPrecios", String.format("%.2f", promedioPrecios));
+                request.setAttribute("paquetesActivos", paquetesActivos);
+                request.setAttribute("descuentoPromedio", 15.0); // Valor de ejemplo
+                request.setAttribute("paquetesVendidos", paquetes.size()); // Valor de ejemplo
+                
+            } else {
+                request.setAttribute("paquetes", null);
+                request.setAttribute("totalPaquetes", 0);
+                request.setAttribute("paquetesActivos", 0);
+                request.setAttribute("descuentoPromedio", 0);
+                request.setAttribute("paquetesVendidos", 0);
                 
                 if (request.getAttribute("mensaje") == null) {
-                    request.setAttribute("mensaje", "✅ Se encontraron " + paquetes.size() + " paquetes de servicios");
-                }
-            } else {
-                request.setAttribute("paquetesServicio", null);
-                 if (request.getAttribute("mensaje") == null) {
                     request.setAttribute("mensaje", "ℹ️ No existen paquetes de servicios registrados");
-                 }
+                }
             }
 
         } catch (Exception e) {
@@ -296,19 +251,19 @@ public class PaqueteServicioControlador extends HttpServlet {
     private void obtenerDetallePaquete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            String idPaqueteStr = limpiarParametro(request.getParameter("idPaquete"));
+            String idPaqueteStr = request.getParameter("idPaquete");
 
-            if (idPaqueteStr.isEmpty()) {
+            if (idPaqueteStr == null || idPaqueteStr.trim().isEmpty()) {
                 request.setAttribute("mensaje", "❌ ID de paquete requerido");
                 request.getRequestDispatcher("ListaPaquetesServicios.jsp").forward(request, response);
                 return;
             }
 
-            int idPaquete = Integer.parseInt(idPaqueteStr);
+            int idPaquete = Integer.parseInt(idPaqueteStr.trim());
 
+            // Manejar mensajes de operaciones
             String servicioEliminado = request.getParameter("servicioEliminado");
             String servicioAgregado = request.getParameter("agregado");
-            String errorSistema = request.getParameter("error");
 
             if ("exito".equals(servicioEliminado)) {
                 request.setAttribute("mensaje", "✅ Servicio eliminado del paquete exitosamente");
@@ -316,41 +271,40 @@ public class PaqueteServicioControlador extends HttpServlet {
             } else if ("exito".equals(servicioAgregado)) {
                 request.setAttribute("mensaje", "✅ Servicio agregado al paquete exitosamente");
                 request.setAttribute("tipoMensaje", "exito");
-            } else if ("sistema".equals(errorSistema)) {
-                request.setAttribute("mensaje", "❌ Error del sistema al modificar el paquete");
-                request.setAttribute("tipoMensaje", "error");
             }
 
             PaqueteServicioDao dao = new PaqueteServicioDao();
             PaqueteServicio paquete = dao.obtenerPaquetePorId(idPaquete);
 
             if (paquete != null) {
-                request.setAttribute("paqueteDetalle", paquete);
+                request.setAttribute("paquete", paquete);
 
+                // Obtener servicios del paquete
                 List<PaqueteServicioItem> serviciosPaquete = dao.obtenerServiciosPaquete(idPaquete);
+                request.setAttribute("serviciosPaquete", serviciosPaquete);
+                
                 if (serviciosPaquete != null && !serviciosPaquete.isEmpty()) {
-                    request.setAttribute("serviciosPaquete", serviciosPaquete);
                     request.setAttribute("totalServicios", serviciosPaquete.size());
-
+                    
+                    // Calcular valor individual y ahorro
                     double valorIndividual = 0.0;
                     for (PaqueteServicioItem item : serviciosPaquete) {
                         valorIndividual += (item.getPrecioUnitario() * item.getCantidad());
                     }
                     
-                    request.setAttribute("valorIndividual", valorIndividual);
-                    request.setAttribute("ahorroEstimado", valorIndividual - paquete.getPrecioTotal());
-                    request.setAttribute("porcentajeDescuento", 
-                        valorIndividual > 0 ? ((valorIndividual - paquete.getPrecioTotal()) / valorIndividual) * 100 : 0);
+                    double ahorro = valorIndividual - paquete.getPrecioTotal();
+                    double porcentajeDescuento = valorIndividual > 0 ? (ahorro / valorIndividual) * 100 : 0;
+                    
+                    request.setAttribute("valorIndividual", String.format("%.2f", valorIndividual));
+                    request.setAttribute("ahorro", String.format("%.2f", ahorro));
+                    request.setAttribute("porcentajeDescuento", String.format("%.1f", porcentajeDescuento));
                 } else {
-                    request.setAttribute("serviciosPaquete", null);
-                    if (request.getAttribute("mensaje") == null) {
-                        request.setAttribute("mensaje", "⚠️ Este paquete no tiene servicios asociados");
-                    }
+                    request.setAttribute("totalServicios", 0);
+                    request.setAttribute("valorIndividual", "0.00");
+                    request.setAttribute("ahorro", "0.00");
+                    request.setAttribute("porcentajeDescuento", "0.0");
                 }
 
-                if (request.getAttribute("mensaje") == null) {
-                    request.setAttribute("mensaje", "✅ Detalle del paquete cargado correctamente");
-                }
             } else {
                 request.setAttribute("mensaje", "❌ Paquete no encontrado");
             }
@@ -368,8 +322,6 @@ public class PaqueteServicioControlador extends HttpServlet {
     private void actualizarPaqueteServicio(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String vistaError = "EditarPaqueteServicio.jsp";
-        
         try {
             String idPaqueteStr = limpiarParametro(request.getParameter("idPaquete"));
             String nombre = limpiarParametro(request.getParameter("nombre"));
@@ -378,7 +330,7 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (idPaqueteStr.isEmpty() || nombre.isEmpty() || descripcion.isEmpty() || precioTotalStr.isEmpty()) {
                 request.setAttribute("mensaje", "❌ ID, nombre, descripción y precio son obligatorios");
-                request.getRequestDispatcher(vistaError).forward(request, response);
+                request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
                 return;
             }
 
@@ -387,7 +339,7 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (precioTotal <= 0) {
                 request.setAttribute("mensaje", "❌ El precio debe ser mayor a cero");
-                request.getRequestDispatcher(vistaError).forward(request, response);
+                request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
                 return;
             }
 
@@ -396,21 +348,16 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (exito) {
                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=listar&actualizado=exito&id=" + idPaquete);
-                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al actualizar el paquete");
-                request.setAttribute("tipoMensaje", "error");
-                request.getRequestDispatcher(vistaError).forward(request, response);
-                return;
+                request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ Datos numéricos inválidos");
-            request.getRequestDispatcher(vistaError).forward(request, response);
-            return;
+            request.getRequestDispatcher("EditarPaqueteServicio.jsp").forward(request, response);
         } catch (Exception e) {
             manejarError(request, response, e, "Error al actualizar paquete de servicios");
-            return;
         }
     }
 
@@ -432,30 +379,24 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (exito) {
                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=listar&eliminado=exito&id=" + idPaquete);
-                return;
             } else {
-                request.setAttribute("mensaje", "❌ Error al eliminar el paquete (verifique dependencias)");
-                request.setAttribute("tipoMensaje", "error");
+                request.setAttribute("mensaje", "❌ Error al eliminar el paquete. Verifique que no tenga servicios asociados.");
                 listarPaquetesServicio(request, response);
-                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ ID de paquete inválido");
             listarPaquetesServicio(request, response);
-            return;
         } catch (Exception e) {
             manejarError(request, response, e, "Error al eliminar paquete de servicios");
-            return;
         }
     }
 
     private void eliminarServicioDePaquete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        String idPaqueteStr = limpiarParametro(request.getParameter("idPaquete"));
-        
         try {
+            String idPaqueteStr = limpiarParametro(request.getParameter("idPaquete"));
             String idServicioStr = limpiarParametro(request.getParameter("idServicio"));
 
             if (idPaqueteStr.isEmpty() || idServicioStr.isEmpty()) {
@@ -472,23 +413,15 @@ public class PaqueteServicioControlador extends HttpServlet {
 
             if (exito) {
                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=obtenerDetalle&idPaquete=" + idPaquete + "&servicioEliminado=exito");
-                return;
             } else {
                 request.setAttribute("mensaje", "❌ Error al eliminar el servicio del paquete");
-                request.setAttribute("tipoMensaje", "error");
-                request.setAttribute("idPaquete", idPaqueteStr);
                 obtenerDetallePaquete(request, response);
-                return;
             }
 
         } catch (NumberFormatException e) {
             request.setAttribute("mensaje", "❌ IDs proporcionados inválidos");
             request.getRequestDispatcher("DetallePaqueteServicio.jsp").forward(request, response);
         } catch (Exception e) {
-             if (!idPaqueteStr.isEmpty()) {
-                 response.sendRedirect(request.getContextPath() + "/PaqueteServicioControlador?accion=obtenerDetalle&idPaquete=" + idPaqueteStr + "&error=sistema");
-                 return;
-             }
             manejarError(request, response, e, "Error al eliminar servicio del paquete");
         }
     }
@@ -504,12 +437,14 @@ public class PaqueteServicioControlador extends HttpServlet {
             PaqueteServicioDao dao = new PaqueteServicioDao();
             List<PaqueteServicio> paquetes = null;
 
-            Double precioMin = null, precioMax = null;
+            double precioMin = 0.0;
+            double precioMax = 100000.0;
+
             if (!precioMinStr.isEmpty()) {
                 try {
                     precioMin = Double.parseDouble(precioMinStr);
                 } catch (NumberFormatException e) {
-                    request.setAttribute("mensaje", "⚠️ Precio mínimo inválido, ignorando criterio");
+                    // Mantener valor por defecto
                 }
             }
 
@@ -517,23 +452,22 @@ public class PaqueteServicioControlador extends HttpServlet {
                 try {
                     precioMax = Double.parseDouble(precioMaxStr);
                 } catch (NumberFormatException e) {
-                    request.setAttribute("mensaje", "⚠️ Precio máximo inválido, ignorando criterio");
+                    // Mantener valor por defecto
                 }
             }
 
-            paquetes = dao.buscarPaquetesServicio(termino, estado, 
-                precioMin != null ? precioMin : 0.0, 
-                precioMax != null ? precioMax : 100000.0);
+            paquetes = dao.buscarPaquetesServicio(termino, estado, precioMin, precioMax);
 
             if (paquetes != null && !paquetes.isEmpty()) {
-                request.setAttribute("paquetesServicio", paquetes);
+                request.setAttribute("paquetes", paquetes);
                 request.setAttribute("totalPaquetes", paquetes.size());
                 request.setAttribute("mensaje", "✅ Se encontraron " + paquetes.size() + " paquetes");
             } else {
-                request.setAttribute("paquetesServicio", null);
+                request.setAttribute("paquetes", null);
                 request.setAttribute("mensaje", "ℹ️ No se encontraron paquetes con los criterios especificados");
             }
 
+            // Mantener valores de búsqueda en el formulario
             request.setAttribute("terminoBusqueda", termino);
             request.setAttribute("estadoBusqueda", estado);
             request.setAttribute("precioMinBusqueda", precioMinStr);
@@ -544,21 +478,6 @@ public class PaqueteServicioControlador extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("BuscarPaquetesServicios.jsp").forward(request, response);
-    }
-
-    private void manejarError(HttpServletRequest request, HttpServletResponse response, 
-                             Exception e, String mensajeContexto) 
-            throws ServletException, IOException {
-        
-        System.err.println("=== ERROR EN PAQUETE SERVICIO CONTROLADOR ===");
-        System.err.println("Contexto: " + mensajeContexto);
-        System.err.println("Mensaje: " + e.getMessage());
-        e.printStackTrace();
-
-        request.setAttribute("mensaje", "❌ " + mensajeContexto + ": " + e.getMessage());
-        request.setAttribute("tipoMensaje", "error");
-        
         request.getRequestDispatcher("ListaPaquetesServicios.jsp").forward(request, response);
     }
 
@@ -573,6 +492,27 @@ public class PaqueteServicioControlador extends HttpServlet {
         }
         
         request.getRequestDispatcher("CrearPaqueteServicio.jsp").forward(request, response);
+    }
+
+    private void manejarError(HttpServletRequest request, HttpServletResponse response, 
+                             Exception e, String mensajeContexto) 
+            throws ServletException, IOException {
+        
+        System.err.println("=== ERROR EN PAQUETE SERVICIO CONTROLADOR ===");
+        System.err.println("Contexto: " + mensajeContexto);
+        System.err.println("Mensaje: " + e.getMessage());
+        e.printStackTrace();
+
+        request.setAttribute("mensaje", "❌ " + mensajeContexto + ": " + e.getMessage());
+        request.setAttribute("tipoMensaje", "error");
+        
+        // Redirigir a la lista principal en caso de error
+        try {
+            listarPaquetesServicio(request, response);
+        } catch (Exception ex) {
+            // Si falla la redirección, enviar error simple
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, mensajeContexto);
+        }
     }
 
     private String limpiarParametro(String param) {

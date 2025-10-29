@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@page import="java.util.*, modelo.PaqueteServicioDetalle, modelo.PaqueteServicio"%>
+<%@page import="java.util.*, modelo.PaqueteServicio, modelo.PaqueteServicioItem"%>
+<%@page import="java.text.SimpleDateFormat"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Paquetes de Servicios - Sistema PetCare</title>
     <style>
+        /* Mantener todos los estilos CSS que tenías anteriormente */
         :root {
             --primary-color: #abcbd5;
             --primary-dark: #8fb6c1;
@@ -303,11 +305,6 @@
             margin-bottom: 5px;
         }
 
-        .package-discount {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
         .package-body {
             padding: 25px;
         }
@@ -535,7 +532,7 @@
                         <div class="stat-label">Paquetes Activos</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">${descuentoPromedio != null ? String.format("%.1f", descuentoPromedio) + "%" : "0%"}</div>
+                        <div class="stat-number">${descuentoPromedio != null ? descuentoPromedio : 0}%</div>
                         <div class="stat-label">Descuento Promedio</div>
                     </div>
                     <div class="stat-item">
@@ -550,11 +547,8 @@
                 <a href="CrearPaqueteServicio.jsp" class="btn btn-success">
                     ➕ Nuevo Paquete
                 </a>
-                <a href="PaqueteServicioControlador?accion=listarTodos" class="btn btn-primary">
+                <a href="<%= request.getContextPath() %>/PaqueteServicioControlador?accion=listar" class="btn btn-primary">
                     📋 Todos los Paquetes
-                </a>
-                <a href="PaqueteServicioControlador?accion=paquetesActivos" class="btn btn-info">
-                    ✅ Paquetes Activos
                 </a>
                 <a href="ReportePaquetes.jsp" class="btn btn-warning">
                     📊 Reporte de Ventas
@@ -564,21 +558,21 @@
             <!-- Panel de Filtros -->
             <div class="filters-panel">
                 <h3>🔍 Filtros de Búsqueda</h3>
-                <form action="PaqueteServicioControlador" method="post" class="filters-form">
+                <form action="<%= request.getContextPath() %>/PaqueteServicioControlador" method="post" class="filters-form">
                     <input type="hidden" name="accion" value="buscarPaquetes">
                     
                     <div class="form-group">
                         <label for="termino">Buscar Paquete:</label>
                         <input type="text" id="termino" name="termino" class="form-control" 
-                               placeholder="Nombre del paquete..." value="${terminoBusqueda}">
+                               placeholder="Nombre del paquete..." value="${terminoBusqueda != null ? terminoBusqueda : ''}">
                     </div>
                     
                     <div class="form-group">
                         <label for="estado">Estado:</label>
                         <select id="estado" name="estado" class="form-control">
                             <option value="">Todos los estados</option>
-                            <option value="ACTIVO" ${estadoSeleccionado == 'ACTIVO' ? 'selected' : ''}>Activos</option>
-                            <option value="INACTIVO" ${estadoSeleccionado == 'INACTIVO' ? 'selected' : ''}>Inactivos</option>
+                            <option value="ACTIVO" ${estadoBusqueda == 'ACTIVO' ? 'selected' : ''}>Activos</option>
+                            <option value="INACTIVO" ${estadoBusqueda == 'INACTIVO' ? 'selected' : ''}>Inactivos</option>
                         </select>
                     </div>
                     
@@ -587,35 +581,32 @@
             </div>
 
             <!-- Mensajes -->
-            <% if (request.getAttribute("mensaje") != null) { %>
-                <div class="message <%= request.getAttribute("tipoMensaje") != null ? request.getAttribute("tipoMensaje") : "info" %>">
-                    <%= request.getAttribute("mensaje") %>
+            <% 
+                String mensaje = (String) request.getAttribute("mensaje");
+                String tipoMensaje = (String) request.getAttribute("tipoMensaje");
+                if (mensaje != null) { 
+            %>
+                <div class="message <%= "exito".equals(tipoMensaje) ? "success" : "error" %>">
+                    <%= mensaje %>
                 </div>
             <% } %>
 
             <!-- Lista de Paquetes -->
             <div class="packages-container">
                 <% 
-                    List<PaqueteServicioDetalle> paquetes = (List<PaqueteServicioDetalle>) request.getAttribute("paquetes");
+                    List<PaqueteServicio> paquetes = (List<PaqueteServicio>) request.getAttribute("paquetes");
                     if (paquetes != null && !paquetes.isEmpty()) {
-                        for (PaqueteServicioDetalle paquete : paquetes) {
+                        for (PaqueteServicio paquete : paquetes) {
                 %>
                 <div class="package-card">
                     <div class="package-header">
-                        <div class="package-title"><%= paquete.getNombre() %></div>
+                        <div class="package-title"><%= paquete.getNombre() != null ? paquete.getNombre() : "Sin nombre" %></div>
                         <div class="package-price">
-                            $<%= String.format("%.2f", paquete.getPrecioFinal()) %>
-                            <% if (paquete.getPorcentajeDescuento() > 0) { %>
-                            <small style="text-decoration: line-through; opacity: 0.7; font-size: 0.6em;">
-                                $<%= String.format("%.2f", paquete.getPrecioOriginal()) %>
-                            </small>
-                            <% } %>
+                            $<%= String.format("%.2f", paquete.getPrecioTotal()) %>
                         </div>
-                        <% if (paquete.getPorcentajeDescuento() > 0) { %>
                         <div class="package-discount">
-                            🎁 <%= String.format("%.0f", paquete.getPorcentajeDescuento()) %>% de descuento
+                            🎁 Paquete con descuento
                         </div>
-                        <% } %>
                     </div>
                     
                     <div class="package-body">
@@ -625,52 +616,66 @@
                         </div>
                         <% } %>
                         
-                        <h4>🎯 Servicios Incluidos:</h4>
+                        <h4>🎯 Información del Paquete:</h4>
                         <ul class="services-list">
-                            <% 
-                                String[] servicios = paquete.getServiciosIncluidos().split(",");
-                                String[] precios = paquete.getPreciosOriginales().split(",");
-                                for (int i = 0; i < servicios.length && i < precios.length; i++) {
-                            %>
                             <li class="service-item">
-                                <span class="service-name">✓ <%= servicios[i].trim() %></span>
-                                <span class="service-price">$<%= precios[i].trim() %></span>
+                                <span class="service-name">ID del Paquete</span>
+                                <span class="service-price">#<%= paquete.getIdPaquete() %></span>
                             </li>
-                            <% } %>
+                            <li class="service-item">
+                                <span class="service-name">Precio Total</span>
+                                <span class="service-price">$<%= String.format("%.2f", paquete.getPrecioTotal()) %></span>
+                            </li>
+                            <li class="service-item">
+                                <span class="service-name">Fecha Creación</span>
+                                <span class="service-price">
+                                    <% if (paquete.getCreatedAt() != null) { 
+                                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                                    %>
+                                        <%= sdf.format(paquete.getCreatedAt()) %>
+                                    <% } else { %>
+                                        No disponible
+                                    <% } %>
+                                </span>
+                            </li>
                         </ul>
+                        
+                        <p><em>💡 Los servicios incluidos se muestran en el detalle del paquete.</em></p>
                     </div>
                     
                     <div class="package-stats">
                         <span>
                             📊 Estado: 
-                            <span class="status-badge <%= paquete.getEstado().toLowerCase() %>">
-                                <%= paquete.getEstado() %>
+                            <span class="status-badge activo">
+                                ACTIVO
                             </span>
                         </span>
-                        <span>📅 Creado: <%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(paquete.getFechaCreacion()) %></span>
+                        <span>
+                            📅 Creado: 
+                            <% if (paquete.getCreatedAt() != null) { 
+                                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                            %>
+                                <%= sdf.format(paquete.getCreatedAt()) %>
+                            <% } else { %>
+                                No disponible
+                            <% } %>
+                        </span>
                     </div>
                     
                     <div class="package-actions">
-                        <a href="PaqueteServicioControlador?accion=verDetalle&idPaquete=<%= paquete.getIdPaqueteServicio() %>" 
+                        <a href="<%= request.getContextPath() %>/PaqueteServicioControlador?accion=obtenerDetalle&idPaquete=<%= paquete.getIdPaquete() %>" 
                            class="btn btn-info" style="font-size: 0.9em;">
                             👁️ Ver Detalle
                         </a>
-                        <a href="EditarPaqueteServicio.jsp?idPaquete=<%= paquete.getIdPaqueteServicio() %>" 
+                        <a href="EditarPaqueteServicio.jsp?idPaquete=<%= paquete.getIdPaquete() %>" 
                            class="btn btn-warning" style="font-size: 0.9em;">
                             ✏️ Editar
                         </a>
-                        <% if ("ACTIVO".equals(paquete.getEstado())) { %>
-                        <a href="PaqueteServicioControlador?accion=desactivar&idPaquete=<%= paquete.getIdPaqueteServicio() %>" 
+                        <a href="<%= request.getContextPath() %>/PaqueteServicioControlador?accion=eliminar&idPaquete=<%= paquete.getIdPaquete() %>" 
                            class="btn btn-danger" style="font-size: 0.9em;"
-                           onclick="return confirm('¿Está seguro de desactivar este paquete?')">
-                            ❌ Desactivar
+                           onclick="return confirm('¿Está seguro de eliminar este paquete?')">
+                            🗑️ Eliminar
                         </a>
-                        <% } else { %>
-                        <a href="PaqueteServicioControlador?accion=activar&idPaquete=<%= paquete.getIdPaqueteServicio() %>" 
-                           class="btn btn-success" style="font-size: 0.9em;">
-                            ✅ Activar
-                        </a>
-                        <% } %>
                     </div>
                 </div>
                 <%
@@ -690,5 +695,20 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Script para manejar confirmaciones y mejoras de UX
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mejorar la experiencia de usuario
+            const mensajes = document.querySelectorAll('.message');
+            mensajes.forEach(mensaje => {
+                setTimeout(() => {
+                    mensaje.style.opacity = '0';
+                    mensaje.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => mensaje.remove(), 500);
+                }, 5000);
+            });
+        });
+    </script>
 </body>
 </html>
