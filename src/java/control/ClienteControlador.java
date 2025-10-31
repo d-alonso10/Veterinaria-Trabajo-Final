@@ -68,7 +68,7 @@ public class ClienteControlador extends HttpServlet {
                     || apellido == null || apellido.isEmpty()
                     || dniRuc == null || dniRuc.isEmpty()) {
 
-                request.setAttribute("mensaje", "❌ Error: Nombre, Apellido y DNI/RUC son obligatorios");
+                request.setAttribute("mensaje", "? Error: Nombre, Apellido y DNI/RUC son obligatorios");
                 request.getRequestDispatcher("InsertarCliente.jsp").forward(request, response);
                 return;
             }
@@ -85,11 +85,11 @@ public class ClienteControlador extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/ClienteControlador?accion=listarTodos&creado=exito");
                 return;
             } else {
-                request.setAttribute("mensaje", "❌ Error al insertar cliente. Posible DNI/RUC duplicado.");
+                request.setAttribute("mensaje", "? Error al insertar cliente. Posible DNI/RUC duplicado.");
             }
 
         } catch (Exception e) {
-            request.setAttribute("mensaje", "❌ Error del sistema: " + e.getMessage());
+            request.setAttribute("mensaje", "? Error del sistema: " + e.getMessage());
         }
 
         // Solo usar forward en caso de error para mostrar el mensaje en el formulario
@@ -103,7 +103,7 @@ public class ClienteControlador extends HttpServlet {
             String termino = request.getParameter("termino");
 
             if (termino == null || termino.trim().isEmpty()) {
-                request.setAttribute("mensaje", "🔍 Ingrese un término de búsqueda");
+                request.setAttribute("mensaje", "? Ingrese un término de búsqueda");
                 request.getRequestDispatcher("BuscarClientes.jsp").forward(request, response);
                 return;
             }
@@ -116,7 +116,7 @@ public class ClienteControlador extends HttpServlet {
             request.setAttribute("totalResultados", clientes.size());
 
         } catch (Exception e) {
-            request.setAttribute("mensaje", "❌ Error al buscar clientes: " + e.getMessage());
+            request.setAttribute("mensaje", "? Error al buscar clientes: " + e.getMessage());
         }
 
         request.getRequestDispatcher("BuscarClientes.jsp").forward(request, response);
@@ -133,46 +133,68 @@ public class ClienteControlador extends HttpServlet {
             request.setAttribute("totalClientes", clientesFrecuentes.size());
 
         } catch (Exception e) {
-            request.setAttribute("mensaje", "❌ Error al cargar clientes frecuentes: " + e.getMessage());
+            request.setAttribute("mensaje", "? Error al cargar clientes frecuentes: " + e.getMessage());
         }
 
         request.getRequestDispatcher("ClientesFrecuentes.jsp").forward(request, response);
     }
 
+    // ??? MÉTODO CORREGIDO: Listar todos los clientes
     private void listarTodosClientes(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             // Verificar si viene de una creación exitosa
             String creado = request.getParameter("creado");
             if ("exito".equals(creado)) {
-                request.setAttribute("mensaje", "✅ Cliente creado exitosamente");
+                request.setAttribute("mensaje", "? Cliente creado exitosamente");
                 request.setAttribute("tipoMensaje", "exito");
             }
 
-            System.out.println("=== CARGANDO CLIENTES DESDE SERVLET ===");
+            System.out.println("=== CARGANDO CLIENTES - SOLUCIÓN APLICADA ===");
 
             ClienteDao dao = new ClienteDao();
-            List<Cliente> todosClientes = dao.buscarClientes("");
+            List<Cliente> todosClientes = null;
+            
+            // ? ESTRATEGIA MEJORADA: Intentar múltiples métodos
+            System.out.println("Intentando cargar clientes...");
+            
+            // 1. Primero intentar con listarTodosClientes()
+            todosClientes = dao.listarTodosClientes();
+            System.out.println("Después de listarTodosClientes(): " + 
+                              (todosClientes != null ? todosClientes.size() : "null"));
+            
+            // 2. Si falla o está vacío, intentar con buscarClientes("%")
+            if (todosClientes == null || todosClientes.isEmpty()) {
+                System.out.println("Usando alternativa buscarClientes('%')");
+                todosClientes = dao.buscarClientes("%");
+                System.out.println("Después de buscarClientes('%'): " + 
+                                  (todosClientes != null ? todosClientes.size() : "null"));
+            }
+            
+            // 3. Último recurso: crear lista vacía
+            if (todosClientes == null) {
+                System.out.println("Creando lista vacía como último recurso");
+                todosClientes = new ArrayList<>();
+            }
 
-            System.out.println("Clientes obtenidos: " + (todosClientes != null ? todosClientes.size() : "null"));
+            System.out.println("Clientes finales a enviar al JSP: " + todosClientes.size());
 
             // ESTO ES LO MÁS IMPORTANTE - asegurar que los datos lleguen al JSP
             request.setAttribute("clientes", todosClientes);
-            request.setAttribute("totalClientes", todosClientes != null ? todosClientes.size() : 0);
+            request.setAttribute("totalClientes", todosClientes.size());
 
             System.out.println("Atributos establecidos - redirigiendo a ListaClientes.jsp");
 
         } catch (Exception e) {
-            System.out.println("ERROR: " + e.getMessage());
+            System.out.println("ERROR CRÍTICO al cargar clientes: " + e.getMessage());
             e.printStackTrace();
 
-            // En caso de error, enviar lista vacía
+            // En caso de error, enviar lista vacía pero informar
             request.setAttribute("clientes", new ArrayList<Cliente>());
             request.setAttribute("totalClientes", 0);
-            request.setAttribute("mensaje", "❌ Error al cargar clientes");
+            request.setAttribute("mensaje", "? Error al cargar clientes: " + e.getMessage());
         }
 
-        // Asegúrate de que esto diga EXACTAMENTE "ListaClientes.jsp"
         request.getRequestDispatcher("ListaClientes.jsp").forward(request, response);
     }
 
