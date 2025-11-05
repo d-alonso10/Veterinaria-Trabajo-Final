@@ -3,13 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/src/java/dao/ServicioDao.java</file>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/src/java/modelo/PaqueteServicioItem.java</file>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/src/java/modelo/Servicio.java</file>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/src/java/dao/PaqueteServicioDao.java</file>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/web/ListaPaquetesServicios.jsp</file>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/src/java/control/PaqueteServicioControlador.java</file>
-            <file>file:/C:/Users/usuario/Desktop/Universidad/Veterinaria/src/java/modelo/PaqueteServicio.java</file>
+            <file>file:/C:/Users/dalon/OneDrive/Escritorio/Veterinaria-Trabajo-Final/web/includes/menu.jsp</file>
+            <file>file:/C:/Users/dalon/OneDrive/Escritorio/Veterinaria-Trabajo-Final/web/Menu.jsp</file>
+            <file>file:/C:/Users/dalon/OneDrive/Escritorio/Veterinaria-Trabajo-Final/web/BuscarMascotas.jsp</file>
         </group>
     </open-files>
 </project-private>
