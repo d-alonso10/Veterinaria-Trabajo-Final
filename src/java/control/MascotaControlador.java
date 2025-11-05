@@ -2,7 +2,8 @@ package control;
 
 import dao.MascotaDao;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -32,6 +33,7 @@ public class MascotaControlador extends HttpServlet {
         else if (accion != null) {
             switch (accion) {
                 case "buscar":
+                case "listarTodas": // <-- CORRECCIÓN: Ambas acciones usan el mismo método
                     buscarMascotas(request, response);
                     break;
                 case "obtenerPorCliente":
@@ -40,14 +42,14 @@ public class MascotaControlador extends HttpServlet {
                 case "historial":
                     verHistorialMascota(request, response);
                     break;
-                case "listarTodas":
-                    listarTodasMascotas(request, response);
-                    break;
                 default:
-                    response.sendRedirect("Menu.jsp");
+                    // Redirigir a un JSP de formulario si la acción no es reconocida
+                    // o si se llama al controlador sin acción.
+                    request.getRequestDispatcher("InsertarMascota.jsp").forward(request, response);
             }
         } else {
-            response.sendRedirect("InsertarMascota.jsp");
+            // Acción por defecto: mostrar el formulario de inserción
+            request.getRequestDispatcher("InsertarMascota.jsp").forward(request, response);
         }
     }
 
@@ -113,8 +115,9 @@ public class MascotaControlador extends HttpServlet {
 
             if (exito) {
                 // ¡CORRECTO! Patrón Post-Redirect-Get para evitar duplicaciones
+                // Redirigimos a la acción 'listarTodas' y añadimos el parámetro 'creado=exito'
                 response.sendRedirect(request.getContextPath() + "/MascotaControlador?accion=listarTodas&creado=exito");
-                return;
+                return; // Importante hacer return después de un sendRedirect
             } else {
                 request.setAttribute("mensaje", "❌ Error al insertar mascota");
             }
@@ -127,11 +130,18 @@ public class MascotaControlador extends HttpServlet {
         request.getRequestDispatcher("InsertarMascota.jsp").forward(request, response);
     }
 
-    // MÉTODO: Buscar mascotas
-    // En el MascotaControlador, modifica el método buscarMascotas:
+    
+    // MÉTODO: Buscar mascotas (Unificado con ListarTodas)
     private void buscarMascotas(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
+            // Verificar si viene de una creación exitosa
+            String creado = request.getParameter("creado");
+            if ("exito".equals(creado)) {
+                request.setAttribute("mensaje", "✅ Mascota creada exitosamente");
+                request.setAttribute("tipoMensaje", "exito");
+            }
+            
             String termino = request.getParameter("termino");
 
             MascotaDao dao = new MascotaDao();
@@ -147,13 +157,15 @@ public class MascotaControlador extends HttpServlet {
             }
 
             request.setAttribute("mascotas", mascotas);
-            request.setAttribute("totalResultados", mascotas.size());
+            request.setAttribute("totalResultados", mascotas != null ? mascotas.size() : 0);
 
         } catch (Exception e) {
+            request.setAttribute("mascotas", new ArrayList<>()); // Enviar lista vacía en error
+            request.setAttribute("totalResultados", 0);
             request.setAttribute("mensaje", "❌ Error al buscar mascotas: " + e.getMessage());
         }
 
-        // Redirigir al nuevo JSP que muestra la tabla completa
+        // Redirigir al JSP que muestra la tabla completa
         request.getRequestDispatcher("ListaMascotas.jsp").forward(request, response);
     }
 
@@ -215,32 +227,11 @@ public class MascotaControlador extends HttpServlet {
         request.getRequestDispatcher("HistorialMascota.jsp").forward(request, response);
     }
 
-    // NUEVO MÉTODO: Listar todas las mascotas
-    private void listarTodasMascotas(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        try {
-            // Verificar si viene de una creación exitosa
-            String creado = request.getParameter("creado");
-            if ("exito".equals(creado)) {
-                request.setAttribute("mensaje", "✅ Mascota creada exitosamente");
-                request.setAttribute("tipoMensaje", "exito");
-            }
+    
+    // --- MÉTODO listarTodasMascotas() ELIMINADO ---
+    // La lógica se ha fusionado con buscarMascotas()
 
-            MascotaDao dao = new MascotaDao();
-            List<modelo.MascotaBusquedaDTO> mascotas = dao.buscarMascotas("");
-
-            request.setAttribute("mascotas", mascotas);
-            request.setAttribute("totalMascotas", mascotas != null ? mascotas.size() : 0);
-
-        } catch (Exception e) {
-            request.setAttribute("mascotas", new ArrayList<>());
-            request.setAttribute("totalMascotas", 0);
-            request.setAttribute("mensaje", "❌ Error al cargar mascotas: " + e.getMessage());
-        }
-
-        request.getRequestDispatcher("ListaMascotas.jsp").forward(request, response);
-    }
-
+    
     // Método auxiliar para limpiar parámetros
     private String limpiarParametro(String param) {
         if (param == null) {
