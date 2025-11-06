@@ -1,5 +1,6 @@
 package modelo;
 
+// DTO para el resultado de 'sp_BuscarMascotas'
 public class MascotaBusquedaDTO {
     private int idMascota;
     private String nombre;
@@ -10,16 +11,6 @@ public class MascotaBusquedaDTO {
     private String clienteApellido;
 
     public MascotaBusquedaDTO() {}
-
-    public MascotaBusquedaDTO(int idMascota, String nombre, String especie, String raza, String microchip, String clienteNombre, String clienteApellido) {
-        this.idMascota = idMascota;
-        this.nombre = nombre;
-        this.especie = especie;
-        this.raza = raza;
-        this.microchip = microchip;
-        this.clienteNombre = clienteNombre;
-        this.clienteApellido = clienteApellido;
-    }
 
     // Getters y Setters
     public int getIdMascota() { return idMascota; }
@@ -36,9 +27,4 @@ public class MascotaBusquedaDTO {
     public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
     public String getClienteApellido() { return clienteApellido; }
     public void setClienteApellido(String clienteApellido) { this.clienteApellido = clienteApellido; }
-    
-    // Método auxiliar para nombre completo del cliente
-    public String getClienteNombreCompleto() {
-        return clienteNombre + " " + clienteApellido;
-    }
 }

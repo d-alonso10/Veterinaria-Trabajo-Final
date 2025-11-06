@@ -1,4 +1,24 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="modelo.MetricasDashboardDTO, java.text.DecimalFormat" %>
+<%
+    // --- INICIO DE LÓGICA DEL CONTROLADOR ---
+    // 1. Recuperar las métricas enviadas por DashboardControlador
+    MetricasDashboardDTO metricas = (MetricasDashboardDTO) request.getAttribute("metricas");
+
+    // 2. Crear un objeto por defecto si el controlador no lo envía (para evitar NullPointerException)
+    if (metricas == null) {
+        // Si se accede al Menú sin pasar por el controlador, mostrar ceros.
+        metricas = new MetricasDashboardDTO(0, 0, 0, 0.0, 0); 
+    }
+
+    // 3. Recuperar cualquier mensaje del controlador
+    String mensaje = (String) request.getAttribute("mensaje");
+    String tipoMensaje = (String) request.getAttribute("tipoMensaje"); // "error", "exito", "info"
+
+    // 4. Preparar formateador de moneda
+    DecimalFormat df = new DecimalFormat("S/ #,##0.00");
+    // --- FIN DE LÓGICA DEL CONTROLADOR ---
+%>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -311,39 +331,34 @@
                 transform: translateY(-3px);
                 box-shadow: 0 12px 35px rgba(255, 193, 7, 0.4);
             }
-
-            .btn-danger {
-                background: var(--gradient-danger);
-                color: var(--white);
-                box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
+            
+            /* --- ESTILOS DE MENSAJE AÑADIDOS --- */
+            .message-banner {
+                padding: 15px 20px;
+                border-radius: 12px;
+                margin-bottom: 25px;
+                font-size: 1em;
+                font-weight: 500;
+                text-align: center;
+                border: 1px solid transparent;
+                animation: fadeInUp 0.5s ease-out;
             }
-
-            .btn-danger:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 35px rgba(244, 67, 54, 0.4);
+            .message-banner.exito {
+                background-color: #e6ffe6;
+                border-color: #ccffcc;
+                color: #006400;
             }
-
-            .btn-secondary {
-                background: linear-gradient(135deg, var(--secondary-color) 0%, #c9b18c 100%);
-                color: var(--text-dark);
-                box-shadow: 0 8px 25px rgba(213, 196, 173, 0.3);
+            .message-banner.error {
+                background-color: #ffe6e6;
+                border-color: #ffcccc;
+                color: #c00;
             }
-
-            .btn-secondary:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 35px rgba(213, 196, 173, 0.4);
+            .message-banner.info {
+                background-color: #e6f3ff;
+                border-color: #cce5ff;
+                color: #0056b3;
             }
-
-            .btn-info {
-                background: linear-gradient(135deg, var(--info-color) 0%, #0b7dda 100%);
-                color: var(--white);
-                box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
-            }
-
-            .btn-info:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 35px rgba(33, 150, 243, 0.4);
-            }
+            /* --- FIN DE ESTILOS DE MENSAJE --- */
 
             /* Stats Container */
             .stats-container {
@@ -363,18 +378,6 @@
                 transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 overflow: hidden;
-                animation: fadeInUp 0.8s ease-out;
-            }
-
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(40px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
             }
 
             .stat-card::before {
@@ -413,81 +416,6 @@
                 letter-spacing: 1px;
             }
 
-            /* Dashboard Cards */
-            .dashboard-cards {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 25px;
-                margin: 30px 0;
-            }
-
-            .card {
-                background: var(--white);
-                padding: 30px;
-                border-radius: var(--radius);
-                box-shadow: var(--shadow);
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                position: relative;
-                overflow: hidden;
-                animation: fadeInUp 0.8s ease-out;
-            }
-
-            .card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 4px;
-                background: var(--gradient-primary);
-            }
-
-            .card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-            }
-
-            .card h3 {
-                color: var(--text-dark);
-                margin-bottom: 20px;
-                font-size: 1.4em;
-                font-weight: 700;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .card-icon {
-                font-size: 1.5em;
-                color: var(--primary-color);
-            }
-
-            .card-content {
-                color: var(--text-light);
-                line-height: 1.8;
-            }
-
-            .card-content p {
-                margin-bottom: 12px;
-                padding: 8px 0;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                transition: all 0.3s ease;
-            }
-
-            .card-content p:hover {
-                color: var(--text-dark);
-                transform: translateX(5px);
-            }
-
-            .card-content p:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-            }
-
             /* Quick Actions */
             .quick-actions {
                 display: grid;
@@ -504,7 +432,6 @@
                 text-align: center;
                 transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 border: 1px solid rgba(0, 0, 0, 0.05);
-                animation: fadeInUp 0.8s ease-out;
             }
 
             .action-card:hover {
@@ -530,65 +457,10 @@
                 font-size: 0.9em;
                 margin-bottom: 15px;
             }
-
-            /* Recent Activity */
-            .activity-list {
-                background: var(--white);
-                border-radius: var(--radius);
-                box-shadow: var(--shadow);
-                overflow: hidden;
-                margin: 30px 0;
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                animation: fadeInUp 0.8s ease-out;
-            }
-
-            .activity-header {
-                padding: 20px 25px;
-                background: var(--gradient-primary);
-                color: var(--white);
-                font-size: 1.2em;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .activity-item {
-                padding: 18px 25px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                transition: all 0.3s ease;
-            }
-
-            .activity-item:hover {
-                background: rgba(171, 203, 213, 0.05);
-            }
-
-            .activity-item:last-child {
-                border-bottom: none;
-            }
-
-            .activity-icon {
-                font-size: 1.3em;
-                width: 40px;
-                text-align: center;
-            }
-
-            .activity-content {
-                flex: 1;
-            }
-
-            .activity-title {
-                font-weight: 600;
-                color: var(--text-dark);
-                margin-bottom: 4px;
-            }
-
-            .activity-time {
-                color: var(--text-light);
-                font-size: 0.85em;
+            
+            .btn-small { /* Estilo para botones dentro de action-card */
+                padding: 12px 20px;
+                font-size: 0.9em;
             }
 
             /* Responsive Design */
@@ -628,9 +500,6 @@
                     width: 100%;
                     justify-content: center;
                 }
-                .dashboard-cards {
-                    grid-template-columns: 1fr;
-                }
                 .stats-container {
                     grid-template-columns: repeat(2, 1fr);
                 }
@@ -667,15 +536,16 @@
                 0%, 100% { transform: translateY(0px); }
                 50% { transform: translateY(-10px); }
             }
-
-            .pulse {
-                animation: pulse 2s infinite;
-            }
-
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-                100% { transform: scale(1); }
+            
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(40px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             /* Loading animation */
@@ -688,7 +558,7 @@
                 width: 8px;
                 height: 8px;
                 border-radius: 50%;
-                background: var(--primary-color);
+                background: var(--white); /* Color blanco para contraste en botones */
                 animation: loading 1.4s infinite ease-in-out;
             }
 
@@ -703,7 +573,7 @@
     </head>
     <body>
         <div class="container">
-            <!-- Sidebar Menu - Incluido desde includes/menu.jsp para seguir patrón MVC -->
+            <!-- Sidebar Menu - NO SE TOCA ESTA PARTE -->
             <jsp:include page="includes/menu.jsp" />
 
             <!-- Main Content -->
@@ -712,7 +582,7 @@
                     <div class="header-top">
                         <div class="welcome">
                             <h1>📊 Dashboard Principal</h1>
-                            <p>Resumen completo del sistema - <%= new java.text.SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy").format(new java.util.Date())%></p>
+                            <p>Resumen completo del sistema - <span id="current-time-placeholder">Cargando fecha...</span></p>
                         </div>
                         <div class="header-actions">
                             <a href="<%= request.getContextPath()%>/CitaControlador?accion=mostrarFormulario" class="btn btn-success">➕ Nueva Cita</a>
@@ -722,31 +592,47 @@
                 </div>
 
                 <div class="main-content">
-                    <!-- Estadísticas Principales -->
+                    
+                    <!-- --- CORRECCIÓN: Mostrar Mensajes del Controlador --- -->
+                    <% if (mensaje != null && tipoMensaje != null) { %>
+                        <div class="message-banner <%= tipoMensaje %>">
+                            <%= mensaje %>
+                        </div>
+                    <% } %>
+                    
+                    <!-- --- CORRECCIÓN: Estadísticas Principales (Ahora Dinámicas) --- -->
                     <div class="stats-container">
+                        
+                        <!-- Citas del Día (Viene del SP corregido) -->
                         <div class="stat-card floating">
                             <span class="stat-icon">📅</span>
-                            <div class="stat-number">24</div>
-                            <div class="stat-label">Citas Hoy</div>
+                            <div class="stat-number"><%= metricas.getCitasHoy() %></div>
+                            <div class="stat-label">Citas del Día</div>
                         </div>
+                        
+                        <!-- Atenciones en Curso (Dato directo del SP) -->
                         <div class="stat-card floating" style="animation-delay: 0.2s;">
-                            <span class="stat-icon">👥</span>
-                            <div class="stat-number">18</div>
-                            <div class="stat-label">Clientes Atendidos</div>
+                            <span class="stat-icon">⚡</span>
+                            <div class="stat-number"><%= metricas.getAtencionesCurso() %></div>
+                            <div class="stat-label">Atenciones en Curso</div>
                         </div>
+                        
+                        <!-- Ingresos del Día (Viene del SP corregido, usando el DTO) -->
                         <div class="stat-card floating" style="animation-delay: 0.4s;">
                             <span class="stat-icon">💰</span>
-                            <div class="stat-number">S/ 2,850</div>
+                            <div class="stat-number"><%= df.format(metricas.getIngresosMes()) %></div>
                             <div class="stat-label">Ingresos del Día</div>
                         </div>
+                        
+                        <!-- Total Clientes (Dato directo del SP) -->
                         <div class="stat-card floating" style="animation-delay: 0.6s;">
-                            <span class="stat-icon">⭐</span>
-                            <div class="stat-number">92%</div>
-                            <div class="stat-label">Satisfacción</div>
+                            <span class="stat-icon">👥</span>
+                            <div class="stat-number"><%= metricas.getTotalClientes() %></div>
+                            <div class="stat-label">Total Clientes</div>
                         </div>
                     </div>
 
-                    <!-- Acciones Rápidas -->
+                    <!-- Acciones Rápidas (Esta sección se mantiene, son enlaces funcionales) -->
                     <div class="quick-actions">
                         <div class="action-card">
                             <span class="action-icon">📅</span>
@@ -774,83 +660,11 @@
                         </div>
                     </div>
 
-                    <!-- Tarjetas de Información -->
-                    <div class="dashboard-cards">
-                        <div class="card">
-                            <h3><span class="card-icon">📅</span> Próximas Citas</h3>
-                            <div class="card-content">
-                                <p>🕙 10:00 AM - Baño completo (Rex)</p>
-                                <p>🕚 11:30 AM - Corte de pelo (Luna)</p>
-                                <p>🕑 02:00 PM - Limpieza dental (Max)</p>
-                                <p>🕒 03:30 PM - Corte de uñas (Bella)</p>
-                                <p>🕓 04:45 PM - Baño medicado (Rocky)</p>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h3><span class="card-icon">🎯</span> Acciones Rápidas</h3>
-                            <div class="card-content">
-                                <p>📋 Agendar nueva cita</p>
-                                <p>💰 Registrar pago</p>
-                                <p>📈 Generar reporte mensual</p>
-                                <p>📦 Revisar inventario</p>
-                                <p>👥 Gestionar personal</p>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h3><span class="card-icon">📈</span> Métricas Importantes</h3>
-                            <div class="card-content">
-                                <p>📊 Tasa de ocupación: 78%</p>
-                                <p>🔄 Clientes recurrentes: 65%</p>
-                                <p>⏱️ Tiempo promedio servicio: 45 min</p>
-                                <p>💰 Promedio gasto por cliente: S/ 45</p>
-                                <p>⭐ Rating promedio: 4.8/5</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Actividad Reciente -->
-                    <div class="activity-list">
-                        <div class="activity-header">
-                            <span>🕒 Actividad Reciente</span>
-                        </div>
-                        <div class="activity-item">
-                            <span class="activity-icon">✅</span>
-                            <div class="activity-content">
-                                <div class="activity-title">Cita completada - Baño completo</div>
-                                <div class="activity-time">Hace 15 minutos - Cliente: María González</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <span class="activity-icon">💰</span>
-                            <div class="activity-content">
-                                <div class="activity-title">Pago procesado - S/ 75.00</div>
-                                <div class="activity-time">Hace 30 minutos - Cliente: Carlos López</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <span class="activity-icon">👤</span>
-                            <div class="activity-content">
-                                <div class="activity-title">Nuevo cliente registrado</div>
-                                <div class="activity-time">Hace 1 hora - Ana Martínez</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <span class="activity-icon">📅</span>
-                            <div class="activity-content">
-                                <div class="activity-title">Cita reprogramada</div>
-                                <div class="activity-time">Hace 2 horas - De 10:00 AM a 11:00 AM</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <span class="activity-icon">🐾</span>
-                            <div class="activity-content">
-                                <div class="activity-title">Nueva mascota registrada</div>
-                                <div class="activity-time">Hace 3 horas - Max (Golden Retriever)</div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- --- CORRECCIÓN: Se eliminan las tarjetas de datos estáticos --- -->
+                    <!-- "Próximas Citas", "Métricas Importantes" y "Actividad Reciente" -->
+                    <!-- se han eliminado para no mostrar datos falsos. -->
+                    <!-- Se pueden implementar más adelante creando nuevos DAOs y acciones. -->
+                    
                 </div>
             </div>
         </div>
@@ -858,48 +672,37 @@
         <script>
             // Animaciones y efectos interactivos
             document.addEventListener('DOMContentLoaded', function () {
-                // Efecto de aparición escalonada para las tarjetas
-                const cards = document.querySelectorAll('.card, .stat-card, .action-card');
+                
+                // --- CORRECCIÓN: Re-animar solo las tarjetas que quedan ---
+                const cards = document.querySelectorAll('.stat-card, .action-card');
                 cards.forEach((card, index) => {
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(30px)';
-
-                    setTimeout(() => {
-                        card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, index * 100);
+                    // La animación 'fadeInUp' está ahora en el CSS, 
+                    // pero mantenemos el delay escalonado para un efecto agradable.
+                    card.style.animationDelay = (index * 100) + 'ms';
                 });
 
-                // Efecto hover para botones
-                const buttons = document.querySelectorAll('.btn');
-                buttons.forEach(button => {
-                    button.addEventListener('mouseenter', function () {
-                        this.style.transform = 'translateY(-3px)';
-                    });
-                    button.addEventListener('mouseleave', function () {
-                        this.style.transform = 'translateY(0)';
-                    });
-                });
-
-                // Contador animado para las estadísticas
+                // Efecto hover para botones (movido a CSS :hover para más eficiencia)
+                
+                // --- CORRECCIÓN: Contador animado ---
+                // El script original funcionará bien con los valores JSP renderizados.
                 const statNumbers = document.querySelectorAll('.stat-number');
                 statNumbers.forEach(stat => {
-                    const text = stat.textContent;
-                    if (text.includes('S/')) {
-                        const target = parseFloat(text.replace('S/ ', '').replace(',', ''));
+                    const text = stat.textContent.trim(); // .trim() es importante
+                    
+                    if (text.startsWith('S/')) {
+                        const target = parseFloat(text.replace('S/ ', '').replace(/,/g, ''));
                         if (!isNaN(target)) {
-                            animateValue(stat, 0, target, 2000, 'S/ ');
+                            animateValue(stat, 0, target, 1500, 'S/ ');
                         }
-                    } else if (text.includes('%')) {
+                    } else if (text.endsWith('%')) {
                         const target = parseInt(text.replace('%', ''));
                         if (!isNaN(target)) {
-                            animateValue(stat, 0, target, 2000, '', '%');
+                            animateValue(stat, 0, target, 1500, '', '%');
                         }
                     } else {
-                        const target = parseInt(text);
+                        const target = parseInt(text.replace(/,/g, ''));
                         if (!isNaN(target)) {
-                            animateValue(stat, 0, target, 2000);
+                            animateValue(stat, 0, target, 1500);
                         }
                     }
                 });
@@ -907,25 +710,35 @@
                 function animateValue(element, start, end, duration, prefix = '', suffix = '') {
                     let startTimestamp = null;
                     const step = (timestamp) => {
-                        if (!startTimestamp)
-                            startTimestamp = timestamp;
+                        if (!startTimestamp) startTimestamp = timestamp;
                         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                        const value = Math.floor(progress * (end - start) + start);
+                        // Usar easeOutQuint para una desaceleración agradable
+                        const easedProgress = 1 - Math.pow(1 - progress, 5); 
+                        const value = Math.floor(easedProgress * (end - start) + start);
 
                         if (prefix === 'S/ ') {
-                            element.textContent = prefix + value.toLocaleString('es-PE');
+                            // Formatear moneda correctamente durante la animación
+                            element.textContent = prefix + value.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                         } else {
-                            element.textContent = prefix + value + suffix;
+                            element.textContent = prefix + value.toLocaleString('es-PE') + suffix;
                         }
 
                         if (progress < 1) {
                             window.requestAnimationFrame(step);
+                        } else {
+                             // Asegurarse de que el valor final sea exacto y esté formateado
+                            if (prefix === 'S/ ') {
+                                element.textContent = prefix + end.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            } else {
+                                element.textContent = prefix + end.toLocaleString('es-PE') + suffix;
+                            }
                         }
                     };
                     window.requestAnimationFrame(step);
                 }
 
-                // Actualizar hora en tiempo real
+                // --- CORRECCIÓN: Actualizar hora en tiempo real ---
+                const timePlaceholder = document.getElementById('current-time-placeholder');
                 function updateTime() {
                     const now = new Date();
                     const options = {
@@ -937,11 +750,16 @@
                         minute: '2-digit',
                         second: '2-digit'
                     };
-                    document.querySelector('.welcome p').textContent =
-                            'Resumen completo del sistema - ' + now.toLocaleDateString('es-ES', options);
+                    // Primera letra a mayúscula
+                    let dateString = now.toLocaleDateString('es-ES', options);
+                    dateString = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+                    if(timePlaceholder) {
+                        timePlaceholder.textContent = dateString;
+                    }
                 }
-
-                setInterval(updateTime, 1000);
+                
+                updateTime(); // Llamar inmediatamente
+                setInterval(updateTime, 1000); // Y luego actualizar cada segundo
             });
 
             // Función para mostrar loading en botones
@@ -950,17 +768,24 @@
                 button.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span> Procesando...';
                 button.disabled = true;
 
+                // Simulación - en una app real, esto se quitaría cuando la página cargue
                 setTimeout(() => {
                     button.innerHTML = originalText;
                     button.disabled = false;
-                }, 2000);
+                }, 2000); 
             }
 
             // Agregar evento de loading a los botones principales
             const mainButtons = document.querySelectorAll('.header-actions .btn, .quick-actions .btn');
             mainButtons.forEach(button => {
                 button.addEventListener('click', function (e) {
-                    if (this.href) {
+                    // Solo mostrar loading si es un enlace que navega
+                    if (this.href && !this.href.startsWith('javascript:')) {
+                        // Prevenir doble clic
+                        if(this.disabled) {
+                            e.preventDefault();
+                            return;
+                        }
                         showLoading(this);
                     }
                 });

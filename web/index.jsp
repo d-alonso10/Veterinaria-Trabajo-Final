@@ -23,7 +23,7 @@
             <li class="menu-item" onClick="location.href = 'especialidades.html'">Especialidades</li>
             <li class="menu-item" onClick="location.href = 'citas.jsp'">Citas</li>
             <li class="menu-item" onClick="location.href = 'veterinarios.html'">Veterinarios</li>
-            <a href="LoginRegistro.jsp" style="text-decoration: none">
+            <a href="Login.jsp" style="text-decoration: none">
                 <li class="cta">Sign In</li>
             </a>
         </ul>

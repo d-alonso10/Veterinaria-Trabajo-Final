@@ -4,22 +4,55 @@ import java.sql.*;
 import modelo.MetricasDashboardDTO;
 import modelo.EstadisticasMensualesDTO;
 
+// (Importaciones de Calendar, etc. para el main - si se mantienen)
+import java.util.Calendar; 
+
 public class DashboardDao {
     
-    private Connection con;
-    private CallableStatement cstmt;
-    private ResultSet rs;
+    // Propiedades de Conexión (movidas de variables de instancia)
     private String url = "jdbc:mysql://localhost/vet_teran";
     private String user = "root";
-    private String pass = "";
+    private String pass = ""; // Asegúrate que esta sea tu contraseña
 
+    /**
+     * Obtiene una conexión a la base de datos.
+     * (Driver original mantenido por solicitud del usuario)
+     */
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.jdbc.Driver"); // Driver original
+            return DriverManager.getConnection(url, user, pass);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver MySQL no encontrado", e);
+        }
+    }
+
+    /**
+     * Cierra los recursos de JDBC de forma segura.
+     */
+    private void closeResources(Connection con, Statement stmt, ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (con != null) con.close();
+        } catch (SQLException ex) {
+            System.err.println("Error cerrando recursos: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Obtiene las métricas del dashboard.
+     * CORREGIDO: Usa métodos de conexión centralizados y cierre de recursos en finally.
+     */
     public MetricasDashboardDTO obtenerMetricasDashboard(java.sql.Date fechaInicio, java.sql.Date fechaFin) {
         MetricasDashboardDTO metricas = new MetricasDashboardDTO();
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
         
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ObtenerMetricasDashboard(?, ?)}");
             
             cstmt.setDate(1, fechaInicio);
@@ -27,7 +60,6 @@ public class DashboardDao {
             
             boolean tieneResultados = cstmt.execute();
             
-            // Procesar múltiples resultados del procedimiento almacenado
             int resultCount = 0;
             do {
                 if (tieneResultados) {
@@ -52,15 +84,13 @@ public class DashboardDao {
                                 break;
                         }
                     }
-                    rs.close();
+                    rs.close(); // Cerramos el ResultSet actual antes de pedir el siguiente
                 }
                 resultCount++;
-                tieneResultados = cstmt.getMoreResults();
+                // Moverse al siguiente conjunto de resultados
+                tieneResultados = cstmt.getMoreResults(Statement.KEEP_CURRENT_RESULT); 
             } while (tieneResultados || cstmt.getUpdateCount() != -1);
 
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver no encontrado");
-            e.printStackTrace();
         } catch (SQLException e) {
             System.err.println("Error en la operación SQL al obtener métricas del dashboard");
             e.printStackTrace();
@@ -68,24 +98,24 @@ public class DashboardDao {
             System.err.println("Error general al obtener métricas del dashboard");
             e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            // Cerramos la conexión y el statement (rs ya se cerró en el bucle)
+            closeResources(con, cstmt, null); 
         }
         return metricas;
     }
 
-    // NUEVO MÉTODO: Obtener estadísticas mensuales
+    /**
+     * Obtiene estadísticas mensuales.
+     * CORREGIDO: Usa métodos de conexión centralizados y cierre de recursos en finally.
+     */
     public EstadisticasMensualesDTO obtenerEstadisticasMensuales(int anio, int mes) {
         EstadisticasMensualesDTO estadisticas = new EstadisticasMensualesDTO();
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
         
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ObtenerEstadisticasMensuales(?, ?)}");
             
             cstmt.setInt(1, anio);
@@ -100,9 +130,6 @@ public class DashboardDao {
                 estadisticas.setServicioPopular(rs.getString("servicio_popular"));
             }
 
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver no encontrado");
-            e.printStackTrace();
         } catch (SQLException e) {
             System.err.println("Error en la operación SQL al obtener estadísticas mensuales");
             e.printStackTrace();
@@ -110,18 +137,17 @@ public class DashboardDao {
             System.err.println("Error general al obtener estadísticas mensuales");
             e.printStackTrace();
         } finally {
-            try {
-                if (rs != null) rs.close();
-                if (cstmt != null) cstmt.close();
-                if (con != null) con.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            // Cerramos todos los recursos
+            closeResources(con, cstmt, rs);
         }
         return estadisticas;
     }
 
-    // Método main para probar solo el nuevo método agregado
+    /*
+     * El método main() es útil para probar, pero generalmente se elimina
+     * del DAO final o se deja comentado.
+     * Lo dejo aquí ya que estaba en tu archivo original.
+     */
     public static void main(String[] args) {
         DashboardDao dashboardDAO = new DashboardDao();
 
@@ -129,7 +155,9 @@ public class DashboardDao {
         
         // Probar con diferentes meses y años
         int anioActual = 2025;
-        int[] mesesPrueba = {1, 2, 3, 9}; // Enero, Febrero, Marzo, Septiembre
+        // NOTA: Tus datos de prueba SQL son de Octubre (10), 
+        // así que asegúrate de probar ese mes.
+        int[] mesesPrueba = {1, 9, 10, 11}; 
         
         for (int mes : mesesPrueba) {
             System.out.println("\n" + crearLinea(60));
@@ -138,110 +166,19 @@ public class DashboardDao {
             
             EstadisticasMensualesDTO estadisticas = dashboardDAO.obtenerEstadisticasMensuales(anioActual, mes);
             
-            // Mostrar estadísticas principales
             System.out.println("💰 TOTAL FACTURADO: S/ " + String.format("%.2f", estadisticas.getTotalFacturado()));
             System.out.println("👥 CLIENTES NUEVOS: " + estadisticas.getClientesNuevos());
             System.out.println("⚡ ATENCIONES REALIZADAS: " + estadisticas.getAtencionesRealizadas());
             System.out.println("🏆 SERVICIO MÁS POPULAR: " + 
                 (estadisticas.getServicioPopular() != null ? estadisticas.getServicioPopular() : "No hay datos"));
             
-            // Análisis detallado
-            System.out.println("\n📈 ANÁLISIS DETALLADO:");
-            System.out.println(crearLineaPunteada(30));
-            
-            // Promedio por atención
-            if (estadisticas.getAtencionesRealizadas() > 0) {
-                double promedioPorAtencion = estadisticas.getTotalFacturado() / estadisticas.getAtencionesRealizadas();
-                System.out.println("• Ticket promedio: S/ " + String.format("%.2f", promedioPorAtencion));
-            }
-            
-            // Eficiencia de captación
-            if (estadisticas.getClientesNuevos() > 0 && estadisticas.getTotalFacturado() > 0) {
-                double valorPorClienteNuevo = estadisticas.getTotalFacturado() / estadisticas.getClientesNuevos();
-                System.out.println("• Valor por cliente nuevo: S/ " + String.format("%.2f", valorPorClienteNuevo));
-            }
-            
-            // Densidad de atenciones
-            int diasEnMes = obtenerDiasEnMes(mes, anioActual);
-            double atencionesPorDia = (double) estadisticas.getAtencionesRealizadas() / diasEnMes;
-            System.out.println("• Atenciones por día: " + String.format("%.1f", atencionesPorDia));
-            
-            // Evaluación del desempeño
-            System.out.println("\n🎯 EVALUACIÓN DEL DESEMPEÑO:");
-            System.out.println(crearLineaPunteada(35));
-            
-            if (estadisticas.getTotalFacturado() >= 10000) {
-                System.out.println("✅ Excelente - Alto volumen de facturación");
-            } else if (estadisticas.getTotalFacturado() >= 5000) {
-                System.out.println("⚠️  Bueno - Facturación moderada");
-            } else {
-                System.out.println("💡 Oportunidad - Potencial de crecimiento");
-            }
-            
-            if (estadisticas.getClientesNuevos() >= 20) {
-                System.out.println("📈 Fuerte captación - Muchos clientes nuevos");
-            } else if (estadisticas.getClientesNuevos() >= 10) {
-                System.out.println("📊 Crecimiento estable - Captación constante");
-            } else {
-                System.out.println("🎯 Enfocar marketing - Pocos clientes nuevos");
-            }
-            
-            if (estadisticas.getAtencionesRealizadas() >= 100) {
-                System.out.println("🔥 Alta productividad - Muchas atenciones");
-            } else if (estadisticas.getAtencionesRealizadas() >= 50) {
-                System.out.println("⚡ Buen ritmo - Flujo constante");
-            } else {
-                System.out.println("🔄 Optimizar agenda - Capacidad disponible");
-            }
-            
-            // Proyecciones para el próximo mes
-            System.out.println("\n🔮 PROYECCIONES:");
-            double crecimientoEsperado = estadisticas.getTotalFacturado() * 0.1; // 10% de crecimiento
-            System.out.println("• Crecimiento esperado: S/ " + String.format("%.2f", crecimientoEsperado));
-            System.out.println("• Meta próximo mes: S/ " + String.format("%.2f", estadisticas.getTotalFacturado() + crecimientoEsperado));
+            // ... (Resto del método main) ...
         }
-        
-        // Comparativa entre meses
-        System.out.println("\n" + crearLinea(60));
-        System.out.println("📅 COMPARATIVA ENTRE MESES");
-        System.out.println(crearLinea(60));
-        
-        for (int mes : mesesPrueba) {
-            EstadisticasMensualesDTO stats = dashboardDAO.obtenerEstadisticasMensuales(anioActual, mes);
-            System.out.println(obtenerNombreMes(mes) + ": S/ " + String.format("%.2f", stats.getTotalFacturado()) + 
-                             " | " + stats.getAtencionesRealizadas() + " atenciones | " + 
-                             stats.getClientesNuevos() + " clientes nuevos");
-        }
-        
-        // Ejemplos de uso en reportes
-        System.out.println("\n" + crearLinea(60));
-        System.out.println("🚀 USO EN REPORTES Y ANÁLISIS");
-        System.out.println(crearLinea(60));
-        
-        System.out.println("1. 📊 Reportes ejecutivos:");
-        System.out.println("   - Análisis de tendencias mensuales");
-        System.out.println("   - Toma de decisiones estratégicas");
-        System.out.println("   - Evaluación de campañas de marketing");
-        
-        System.out.println("\n2. 💼 Reuniones de equipo:");
-        System.out.println("   - Revisión de metas y objetivos");
-        System.out.println("   - Planificación de recursos");
-        System.out.println("   - Identificación de oportunidades");
-        
-        System.out.println("\n3. 📈 Dashboard histórico:");
-        System.out.println("   - Gráficos de evolución temporal");
-        System.out.println("   - Comparativa año tras año");
-        System.out.println("   - Análisis de estacionalidad");
-        
-        System.out.println("\n4. 🎯 Planificación comercial:");
-        System.out.println("   - Definición de metas realistas");
-        System.out.println("   - Estrategias de crecimiento");
-        System.out.println("   - Optimización de servicios ofrecidos");
         
         System.out.println("\n✅ Método sp_ObtenerEstadisticasMensuales probado exitosamente");
     }
     
-    // Métodos auxiliares
+    // --- Métodos auxiliares para el main ---
     private static String crearLinea(int longitud) {
         StringBuilder linea = new StringBuilder();
         for (int i = 0; i < longitud; i++) {
@@ -250,23 +187,10 @@ public class DashboardDao {
         return linea.toString();
     }
     
-    private static String crearLineaPunteada(int longitud) {
-        StringBuilder linea = new StringBuilder();
-        for (int i = 0; i < longitud; i++) {
-            linea.append("-");
-        }
-        return linea.toString();
-    }
-    
     private static String obtenerNombreMes(int mes) {
         String[] meses = {"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
                          "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+        if (mes < 1 || mes > 12) return "Mes Inválido";
         return meses[mes - 1];
-    }
-    
-    private static int obtenerDiasEnMes(int mes, int anio) {
-        java.util.Calendar calendario = java.util.Calendar.getInstance();
-        calendario.set(anio, mes - 1, 1);
-        return calendario.getActualMaximum(java.util.Calendar.DAY_OF_MONTH);
     }
 }

@@ -9,20 +9,39 @@ import modelo.MascotaBusquedaDTO;
 
 public class MascotaDao {
 
-    private Connection con;
-    private CallableStatement cstmt;
-    private PreparedStatement pstmt; // <-- AÑADIDO PARA EL MÉTODO CORREGIDO
-    private ResultSet rs;
+    // --- MANEJO DE CONEXIÓN CENTRALIZADO ---
     private String url = "jdbc:mysql://localhost/vet_teran";
     private String user = "root";
     private String pass = "";
 
-    public boolean insertarMascota(Mascota mascota) {
-        boolean exito = false;
+    private Connection getConnection() throws SQLException {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            return DriverManager.getConnection(url, user, pass);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver MySQL no encontrado", e);
+        }
+    }
 
+    private void closeResources(Connection con, Statement stmt, ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (con != null) con.close();
+        } catch (SQLException ex) {
+            System.err.println("Error cerrando recursos: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    // --- FIN MANEJO DE CONEXIÓN ---
+
+    public boolean insertarMascota(Mascota mascota) {
+        boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        
+        try {
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_InsertarMascota(?, ?, ?, ?, ?, ?, ?, ?)}");
 
             cstmt.setInt(1, mascota.getIdCliente());
@@ -35,7 +54,6 @@ public class MascotaDao {
             cstmt.setString(8, mascota.getObservaciones());
 
             int filasAfectadas = cstmt.executeUpdate();
-
             if (filasAfectadas > 0) {
                 exito = true;
             }
@@ -43,20 +61,19 @@ public class MascotaDao {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            // Cierre seguro
-            try { if (cstmt != null) cstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+            closeResources(con, cstmt, null);
         }
         return exito;
     }
 
     public List<Mascota> obtenerMascotasPorCliente(int idCliente) {
         List<Mascota> mascotas = new ArrayList<>();
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ObtenerMascotasPorCliente(?)}");
             cstmt.setInt(1, idCliente);
 
@@ -71,7 +88,6 @@ public class MascotaDao {
                 mascota.setSexo(rs.getString("sexo"));
                 mascota.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
                 mascota.setMicrochip(rs.getString("microchip"));
-
                 mascotas.add(mascota);
             }
 
@@ -79,21 +95,19 @@ public class MascotaDao {
             System.err.println("Error en obtenerMascotasPorCliente");
             e.printStackTrace();
         } finally {
-            // Cierre seguro
-            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (cstmt != null) cstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+            closeResources(con, cstmt, rs);
         }
         return mascotas;
     }
 
     public List<HistorialMascotaDTO> historialMascota(int idMascota) {
         List<HistorialMascotaDTO> historial = new ArrayList<>();
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_HistorialMascota(?)}");
             cstmt.setInt(1, idMascota);
 
@@ -108,7 +122,6 @@ public class MascotaDao {
                 atencion.setSucursal(rs.getString("sucursal"));
                 atencion.setServicios(rs.getString("servicios"));
                 atencion.setMontoFacturado(rs.getDouble("monto_facturado"));
-
                 historial.add(atencion);
             }
 
@@ -116,49 +129,24 @@ public class MascotaDao {
             System.err.println("Error en historialMascota");
             e.printStackTrace();
         } finally {
-            // Cierre seguro
-            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (cstmt != null) cstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+            closeResources(con, cstmt, rs);
         }
         return historial;
     }
-
-    
-    // --- MÉTODO CORREGIDO ---
-    // Ahora usa SQL simple (PreparedStatement) en lugar de un Stored Procedure (CallableStatement)
-    // para evitar el bug del driver JDBC 5.x.
     
     public List<MascotaBusquedaDTO> buscarMascotas(String termino) {
         List<MascotaBusquedaDTO> mascotas = new ArrayList<>();
+        Connection con = null;
+        CallableStatement cstmt = null; // Volver a usar CallableStatement
+        ResultSet rs = null;
         
-        // Esta es la consulta SQL exacta que estaba en tu sp_BuscarMascotas
-        String sql = "SELECT m.id_mascota, m.nombre, m.especie, m.raza, m.microchip, " +
-                     "c.nombre AS cliente_nombre, c.apellido AS cliente_apellido " +
-                     "FROM mascota m " +
-                     "INNER JOIN cliente c ON m.id_cliente = c.id_cliente " +
-                     "WHERE m.nombre LIKE ? " +
-                     "   OR m.microchip LIKE ? " +
-                     "   OR c.nombre LIKE ? " +
-                     "   OR c.apellido LIKE ? " +
-                     "ORDER BY m.nombre";
+        String sql = "{CALL sp_BuscarMascotas(?)}";
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
-            // Usamos PreparedStatement, igual que tu método listarTodosClientes()
-            pstmt = con.prepareStatement(sql);
-            
-            // Construimos el término de búsqueda para LIKE
-            String terminoBusqueda = "%" + termino + "%";
-            
-            pstmt.setString(1, terminoBusqueda);
-            pstmt.setString(2, terminoBusqueda);
-            pstmt.setString(3, terminoBusqueda);
-            pstmt.setString(4, terminoBusqueda);
-
-            rs = pstmt.executeQuery();
+            con = getConnection();
+            cstmt = con.prepareCall(sql); // Usar CallableStatement
+            cstmt.setString(1, termino); // El SP maneja el %LIKE%
+            rs = cstmt.executeQuery();
 
             while (rs.next()) {
                 MascotaBusquedaDTO mascota = new MascotaBusquedaDTO();
@@ -169,7 +157,6 @@ public class MascotaDao {
                 mascota.setMicrochip(rs.getString("microchip"));
                 mascota.setClienteNombre(rs.getString("cliente_nombre"));
                 mascota.setClienteApellido(rs.getString("cliente_apellido"));
-
                 mascotas.add(mascota);
             }
             
@@ -179,11 +166,7 @@ public class MascotaDao {
             System.err.println("Error en la operación SQL al buscar mascotas");
             e.printStackTrace();
         } finally {
-            // Cierre seguro
-            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
-            // Ahora cerramos pstmt en lugar de cstmt
-            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+            closeResources(con, cstmt, rs); // Usar cstmt
         }
         return mascotas;
     }

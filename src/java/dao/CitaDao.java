@@ -7,19 +7,48 @@ import modelo.CitaProximaDTO;
 
 public class CitaDao {
 
-    private Connection con;
-    private CallableStatement cstmt;
-    private ResultSet rs;
+    // --- CORRECCIÓN: Propiedades de conexión ---
     private String url = "jdbc:mysql://localhost/vet_teran";
     private String user = "root";
-    private String pass = "";
+    private String pass = ""; // Asegúrate que esta sea tu contraseña
 
+    /**
+     * CORRECCIÓN: Método centralizado para obtener conexión
+     */
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.jdbc.Driver"); // Driver original
+            return DriverManager.getConnection(url, user, pass);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver MySQL no encontrado", e);
+        }
+    }
+
+    /**
+     * CORRECCIÓN: Método centralizado para cerrar recursos
+     */
+    private void closeResources(Connection con, Statement stmt, ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (con != null) con.close();
+        } catch (SQLException ex) {
+            System.err.println("Error cerrando recursos: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     */
     public boolean crearCita(Cita cita) {
         boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        // ResultSet (rs) no es necesario aquí, el SP no devuelve uno
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_CrearCita(?, ?, ?, ?, ?, ?, ?)}");
 
             cstmt.setInt(1, cita.getIdMascota());
@@ -31,7 +60,6 @@ public class CitaDao {
             cstmt.setString(7, cita.getNotas());
 
             int filasAfectadas = cstmt.executeUpdate();
-
             if (filasAfectadas > 0) {
                 exito = true;
             }
@@ -39,33 +67,27 @@ public class CitaDao {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            closeResources(con, cstmt, null); // Cierra con y cstmt
         }
         return exito;
     }
 
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     */
     public boolean reprogramarCita(int idCita, java.sql.Timestamp nuevaFecha) {
         boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ReprogramarCita(?, ?)}");
 
             cstmt.setInt(1, idCita);
             cstmt.setTimestamp(2, nuevaFecha);
 
             int filasAfectadas = cstmt.executeUpdate();
-
             if (filasAfectadas > 0) {
                 exito = true;
             }
@@ -73,32 +95,26 @@ public class CitaDao {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            closeResources(con, cstmt, null);
         }
         return exito;
     }
 
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     */
     public boolean cancelarCita(int idCita) {
         boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_CancelarCita(?)}");
 
             cstmt.setInt(1, idCita);
 
             int filasAfectadas = cstmt.executeUpdate();
-
             if (filasAfectadas > 0) {
                 exito = true;
             }
@@ -106,33 +122,26 @@ public class CitaDao {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            closeResources(con, cstmt, null);
         }
         return exito;
     }
 
-    // NUEVO MÉTODO: Confirmar asistencia a cita
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     */
     public boolean confirmarAsistenciaCita(int idCita) {
         boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ConfirmarAsistenciaCita(?)}");
 
             cstmt.setInt(1, idCita);
 
             int filasAfectadas = cstmt.executeUpdate();
-
             if (filasAfectadas > 0) {
                 exito = true;
             }
@@ -140,28 +149,22 @@ public class CitaDao {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            closeResources(con, cstmt, null);
         }
         return exito;
     }
 
-    // NUEVO MÉTODO: Obtener próximas citas de un cliente
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     */
     public List<CitaProximaDTO> obtenerProximasCitas(int idCliente) {
         List<CitaProximaDTO> proximasCitas = new ArrayList<>();
-
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ObtenerProximasCitas(?)}");
             cstmt.setInt(1, idCliente);
 
@@ -179,42 +182,28 @@ public class CitaDao {
                 proximasCitas.add(cita);
             }
 
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver no encontrado");
-            e.printStackTrace();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             System.err.println("Error en la operación SQL");
             e.printStackTrace();
-        } catch (Exception e) {
-            System.err.println("Error general");
-            e.printStackTrace();
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            closeResources(con, cstmt, rs); // Cierra todo
         }
         return proximasCitas;
     }
 
-    // NUEVO MÉTODO: Crear atención desde cita
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     */
     public boolean crearAtencionDesdeCita(int idCita, int idGroomer, int idSucursal,
             int turnoNum, java.sql.Timestamp tiempoEstimadoInicio,
             java.sql.Timestamp tiempoEstimadoFin, int prioridad) {
+        
         boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_CrearAtencionDesdeCita(?, ?, ?, ?, ?, ?, ?)}");
 
             cstmt.setInt(1, idCita);
@@ -226,7 +215,6 @@ public class CitaDao {
             cstmt.setInt(7, prioridad);
 
             int filasAfectadas = cstmt.executeUpdate();
-
             if (filasAfectadas > 0) {
                 exito = true;
             }
@@ -234,100 +222,93 @@ public class CitaDao {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            closeResources(con, cstmt, null);
         }
         return exito;
     }
 
+    /**
+     * CORRECCIÓN: Método refactorizado con manejo de recursos
+     * (Se mantienen los logs de depuración)
+     */
     public List<CitaProximaDTO> obtenerTodasProximasCitas() {
-    List<CitaProximaDTO> proximasCitas = new ArrayList<>();
-    PreparedStatement pstmt = null;
+        List<CitaProximaDTO> proximasCitas = new ArrayList<>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        PreparedStatement pstmtTest = null; // Statement separado para la prueba
+        ResultSet rsTest = null; // ResultSet separado para la prueba
 
-    try {
-        System.out.println("=== INICIANDO obtenerTodasProximasCitas ===");
-        System.out.println("📍 URL: " + url);
-        System.out.println("📍 User: " + user);
-
-        Class.forName("com.mysql.jdbc.Driver");
-        System.out.println("✅ Driver cargado");
-
-        con = DriverManager.getConnection(url, user, pass);
-        System.out.println("✅ Conexión establecida");
-
-        // PRIMERO: Hacer una consulta simple de prueba
-        System.out.println("=== CONSULTA SIMPLE DE PRUEBA ===");
-        String testSql = "SELECT COUNT(*) as total FROM cita WHERE estado IN ('reservada', 'confirmada')";
-        pstmt = con.prepareStatement(testSql);
-        rs = pstmt.executeQuery();
-        if (rs.next()) {
-            int total = rs.getInt("total");
-            System.out.println("📊 Citas con estado válido en BD: " + total);
-        }
-        rs.close();
-        pstmt.close();
-
-        // SEGUNDO: Consulta completa con JOINs
-        System.out.println("=== CONSULTA COMPLETA ===");
-        String sql = "SELECT c.id_cita, c.fecha_programada, " +
-                    "COALESCE(m.nombre, 'Sin mascota') as mascota, " +
-                    "COALESCE(s.nombre, 'Sin servicio') as servicio, " +
-                    "c.estado, c.modalidad " +
-                    "FROM cita c " +
-                    "LEFT JOIN mascota m ON c.id_mascota = m.id_mascota " +
-                    "LEFT JOIN servicio s ON c.id_servicio = s.id_servicio " +
-                    "WHERE c.estado IN ('reservada', 'confirmada') " +
-                    "ORDER BY c.fecha_programada ASC";
-
-        System.out.println("📝 Ejecutando SQL: " + sql);
-
-        pstmt = con.prepareStatement(sql);
-        rs = pstmt.executeQuery();
-
-        int rowCount = 0;
-        while (rs.next()) {
-            rowCount++;
-            CitaProximaDTO cita = new CitaProximaDTO();
-            cita.setIdCita(rs.getInt("id_cita"));
-            cita.setFechaProgramada(rs.getTimestamp("fecha_programada"));
-            cita.setMascota(rs.getString("mascota"));
-            cita.setServicio(rs.getString("servicio"));
-            cita.setEstado(rs.getString("estado"));
-            cita.setModalidad(rs.getString("modalidad"));
-
-            proximasCitas.add(cita);
-
-            System.out.println("📋 Cita " + rowCount + ": ID=" + cita.getIdCita()
-                    + ", Estado=" + cita.getEstado()
-                    + ", Mascota=" + cita.getMascota()
-                    + ", Servicio=" + cita.getServicio());
-        }
-
-        System.out.println("✅ Consulta completada. Filas encontradas: " + rowCount);
-
-    } catch (Exception e) {
-        System.err.println("❌ ERROR en obtenerTodasProximasCitas: " + e.getMessage());
-        e.printStackTrace();
-    } finally {
         try {
-            if (rs != null) rs.close();
-            if (pstmt != null) pstmt.close();
-            if (con != null) con.close();
-            System.out.println("✅ Recursos liberados");
-        } catch (SQLException ex) {
-            System.err.println("❌ Error liberando recursos: " + ex.getMessage());
-        }
-    }
+            System.out.println("=== INICIANDO obtenerTodasProximasCitas ===");
+            System.out.println("📍 URL: " + url);
+            System.out.println("📍 User: " + user);
 
-    System.out.println("=== FINALIZANDO obtenerTodasProximasCitas - Total: " + proximasCitas.size() + " ===");
-    return proximasCitas;
-}
+            con = getConnection();
+            System.out.println("✅ Conexión establecida");
+
+            // PRIMERO: Hacer una consulta simple de prueba
+            System.out.println("=== CONSULTA SIMPLE DE PRUEBA ===");
+            String testSql = "SELECT COUNT(*) as total FROM cita WHERE estado IN ('reservada', 'confirmada')";
+            pstmtTest = con.prepareStatement(testSql);
+            rsTest = pstmtTest.executeQuery();
+            if (rsTest.next()) {
+                int total = rsTest.getInt("total");
+                System.out.println("📊 Citas con estado válido en BD: " + total);
+            }
+            // Importante cerrar estos recursos de prueba para no interferir
+            rsTest.close();
+            pstmtTest.close();
+
+            // SEGUNDO: Consulta completa con JOINs
+            System.out.println("=== CONSULTA COMPLETA ===");
+            String sql = "SELECT c.id_cita, c.fecha_programada, " +
+                         "COALESCE(m.nombre, 'Sin mascota') as mascota, " +
+                         "COALESCE(s.nombre, 'Sin servicio') as servicio, " +
+                         "c.estado, c.modalidad " +
+                         "FROM cita c " +
+                         "LEFT JOIN mascota m ON c.id_mascota = m.id_mascota " +
+                         "LEFT JOIN servicio s ON c.id_servicio = s.id_servicio " +
+                         "WHERE c.estado IN ('reservada', 'confirmada') " +
+                         "ORDER BY c.fecha_programada ASC";
+
+            System.out.println("📝 Ejecutando SQL: " + sql);
+
+            pstmt = con.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            int rowCount = 0;
+            while (rs.next()) {
+                rowCount++;
+                CitaProximaDTO cita = new CitaProximaDTO();
+                cita.setIdCita(rs.getInt("id_cita"));
+                cita.setFechaProgramada(rs.getTimestamp("fecha_programada"));
+                cita.setMascota(rs.getString("mascota"));
+                cita.setServicio(rs.getString("servicio"));
+                cita.setEstado(rs.getString("estado"));
+                cita.setModalidad(rs.getString("modalidad"));
+
+                proximasCitas.add(cita);
+
+                System.out.println("📋 Cita " + rowCount + ": ID=" + cita.getIdCita()
+                        + ", Estado=" + cita.getEstado()
+                        + ", Mascota=" + cita.getMascota()
+                        + ", Servicio=" + cita.getServicio());
+            }
+
+            System.out.println("✅ Consulta completada. Filas encontradas: " + rowCount);
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en obtenerTodasProximasCitas: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            // CORRECCIÓN: Cierra todos los recursos. 
+            // Los de prueba (rsTest, pstmtTest) ya se cerraron.
+            closeResources(con, pstmt, rs);
+            System.out.println("✅ Recursos liberados");
+        }
+
+        System.out.println("=== FINALIZANDO obtenerTodasProximasCitas - Total: " + proximasCitas.size() + " ===");
+        return proximasCitas;
+    }
 }

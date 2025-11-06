@@ -7,21 +7,40 @@ import modelo.ClienteFrecuenteDTO;
 
 public class ClienteDao {
 
-    private Connection con;
-    private CallableStatement cstmt;
-    private ResultSet rs;
+    // --- MANEJO DE CONEXIÓN CENTRALIZADO ---
     private String url = "jdbc:mysql://localhost/vet_teran";
     private String user = "root";
     private String pass = "";
 
-    public boolean insertarCliente(Cliente cliente) {
-        boolean exito = false;
+    private Connection getConnection() throws SQLException {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
+            return DriverManager.getConnection(url, user, pass);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver MySQL no encontrado", e);
+        }
+    }
 
+    private void closeResources(Connection con, Statement stmt, ResultSet rs) {
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (con != null) con.close();
+        } catch (SQLException ex) {
+            System.err.println("Error cerrando recursos: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+    // --- FIN MANEJO DE CONEXIÓN ---
+
+    public boolean insertarCliente(Cliente cliente) {
+        boolean exito = false;
+        Connection con = null;
+        CallableStatement cstmt = null;
+        
+        try {
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_InsertarCliente(?, ?, ?, ?, ?, ?, ?)}");
-
             cstmt.setString(1, cliente.getNombre());
             cstmt.setString(2, cliente.getApellido());
             cstmt.setString(3, cliente.getDniRuc());
@@ -29,52 +48,39 @@ public class ClienteDao {
             cstmt.setString(5, cliente.getTelefono());
             cstmt.setString(6, cliente.getDireccion());
 
-            // CONVERTIR String a JSON válido
             String preferencias = cliente.getPreferencias();
             if (preferencias != null && !preferencias.trim().isEmpty()) {
-                // Crear un objeto JSON simple con el valor
-                String jsonPreferencias = "{\"preferencia\": \"" + preferencias.replace("\"", "\\\"") + "\"}";
-                cstmt.setString(7, jsonPreferencias);
+                // Asumimos que las preferencias ya vienen como un JSON simple o un string
+                // Si no es un JSON válido, lo envolvemos
+                if (!preferencias.trim().startsWith("{")) {
+                     preferencias = "{\"preferencia\": \"" + preferencias.replace("\"", "\\\"") + "\"}";
+                }
+                cstmt.setString(7, preferencias);
             } else {
-                // JSON vacío si no hay preferencias
                 cstmt.setString(7, "{}");
             }
 
             int filasAfectadas = cstmt.executeUpdate();
+            exito = (filasAfectadas > 0);
 
-            if (filasAfectadas > 0) {
-                exito = true;
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error SQL al insertar cliente: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error general al insertar cliente");
+            System.err.println("Error SQL al insertar cliente: " + e.getMessage());
+            e.printStackTrace();
         } finally {
-            try {
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                System.err.println("Error al cerrar conexiones: " + ex.getMessage());
-            }
+            closeResources(con, cstmt, null);
         }
         return exito;
     }
 
-    // MÉTODO: Obtener clientes frecuentes (top 10)
     public List<ClienteFrecuenteDTO> clientesFrecuentes() {
         List<ClienteFrecuenteDTO> clientesFrecuentes = new ArrayList<>();
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_ClientesFrecuentes()}");
-
             rs = cstmt.executeQuery();
 
             while (rs.next()) {
@@ -87,45 +93,28 @@ public class ClienteDao {
                 clienteFrecuente.setTotalAtenciones(rs.getInt("total_atenciones"));
                 clienteFrecuente.setTotalMascotas(rs.getInt("total_mascotas"));
                 clienteFrecuente.setTotalGastado(rs.getDouble("total_gastado"));
-
                 clientesFrecuentes.add(clienteFrecuente);
             }
 
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver no encontrado");
-        } catch (SQLException e) {
-            System.err.println("Error en la operación SQL");
         } catch (Exception e) {
-            System.err.println("Error general");
+            System.err.println("Error en la operación SQL: " + e.getMessage());
+            e.printStackTrace();
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                System.err.println("Error al cerrar conexiones: " + ex.getMessage());
-            }
+            closeResources(con, cstmt, rs);
         }
         return clientesFrecuentes;
     }
 
     public List<Cliente> buscarClientes(String termino) {
         List<Cliente> clientes = new ArrayList<>();
+        Connection con = null;
+        CallableStatement cstmt = null;
+        ResultSet rs = null;
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            con = DriverManager.getConnection(url, user, pass);
-
+            con = getConnection();
             cstmt = con.prepareCall("{CALL sp_BuscarClientes(?)}");
-
             cstmt.setString(1, termino);
-
             rs = cstmt.executeQuery();
 
             while (rs.next()) {
@@ -137,106 +126,62 @@ public class ClienteDao {
                 cliente.setEmail(rs.getString("email"));
                 cliente.setTelefono(rs.getString("telefono"));
                 cliente.setDireccion(rs.getString("direccion"));
-
                 clientes.add(cliente);
             }
 
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver no encontrado");
-        } catch (SQLException e) {
-            System.err.println("Error en la operación SQL al buscar clientes");
         } catch (Exception e) {
-            System.err.println("Error general al buscar clientes");
+            System.err.println("Error en la operación SQL al buscar clientes: " + e.getMessage());
+            e.printStackTrace();
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (cstmt != null) {
-                    cstmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                System.err.println("Error al cerrar conexiones: " + ex.getMessage());
-            }
+            closeResources(con, cstmt, rs);
         }
         return clientes;
     }
 
     public List<Cliente> listarTodosClientes() {
         List<Cliente> clientes = new ArrayList<>();
-        Connection localCon = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
-        ResultSet localRs = null;
+        ResultSet rs = null;
 
+        String sql = "SELECT id_cliente, nombre, apellido, dni_ruc, email, telefono, direccion FROM cliente ORDER BY nombre, apellido";
+        
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            localCon = DriverManager.getConnection(url, user, pass);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
+            rs = pstmt.executeQuery();
 
-            String sql = "SELECT id_cliente, nombre, apellido, dni_ruc, email, telefono, direccion FROM cliente ORDER BY nombre, apellido";
-            pstmt = localCon.prepareStatement(sql);
-            localRs = pstmt.executeQuery();
-
-            while (localRs.next()) {
+            while (rs.next()) {
                 Cliente cliente = new Cliente();
-                cliente.setIdCliente(localRs.getInt("id_cliente"));
-                cliente.setNombre(localRs.getString("nombre"));
-                cliente.setApellido(localRs.getString("apellido"));
-                cliente.setDniRuc(localRs.getString("dni_ruc"));
-                cliente.setEmail(localRs.getString("email"));
-                cliente.setTelefono(localRs.getString("telefono"));
-                cliente.setDireccion(localRs.getString("direccion"));
-
+                cliente.setIdCliente(rs.getInt("id_cliente"));
+                cliente.setNombre(rs.getString("nombre"));
+                cliente.setApellido(rs.getString("apellido"));
+                cliente.setDniRuc(rs.getString("dni_ruc"));
+                cliente.setEmail(rs.getString("email"));
+                cliente.setTelefono(rs.getString("telefono"));
+                cliente.setDireccion(rs.getString("direccion"));
                 clientes.add(cliente);
             }
 
-            System.out.println("DEBUG - Clientes encontrados en Dao: " + clientes.size());
-
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error: Driver no encontrado - " + e.getMessage());
-            return null; 
-        } catch (SQLException e) {
-            System.err.println("Error SQL al listar clientes: " + e.getMessage());
-            e.printStackTrace();
-            return null; 
         } catch (Exception e) {
-            System.err.println("Error general al listar clientes: " + e.getMessage());
+            System.err.println("Error al listar clientes: " + e.getMessage());
             e.printStackTrace();
-            return null; 
         } finally {
-            try {
-                if (localRs != null) {
-                    localRs.close();
-                }
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-                if (localCon != null) {
-                    localCon.close();
-                }
-            } catch (SQLException ex) {
-                System.err.println("Error al cerrar conexiones: " + ex.getMessage());
-            }
+            closeResources(con, pstmt, rs);
         }
         return clientes;
     }
 
-    // MÉTODOS FALTANTES REQUERIDOS POR ClienteControlador según instrucciones de Diego
-
-    // Para ClienteControlador?accion=editar (antes de mostrar el formulario de edición)
     public Cliente obtenerClientePorId(int idCliente) {
         Cliente cliente = null;
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         String sql = "SELECT * FROM cliente WHERE id_cliente = ?";
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(url, user, pass);
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, idCliente);
             rs = pstmt.executeQuery();
 
@@ -249,32 +194,28 @@ public class ClienteDao {
                 cliente.setEmail(rs.getString("email"));
                 cliente.setTelefono(rs.getString("telefono"));
                 cliente.setDireccion(rs.getString("direccion"));
-                // Manejar preferencias JSON
                 String prefs = rs.getString("preferencias");
                 cliente.setPreferencias(prefs != null ? prefs : "{}");
             }
+
         } catch (Exception e) {
             System.err.println("Error al obtener cliente por ID: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            closeResources(con, pstmt, rs);
         }
         return cliente;
     }
 
-    // Para ClienteControlador?accion=actualizar (después de enviar el formulario de edición)
     public boolean actualizarCliente(Cliente cliente) {
         boolean exito = false;
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         String sql = "UPDATE cliente SET nombre = ?, apellido = ?, dni_ruc = ?, email = ?, telefono = ?, direccion = ?, preferencias = ? WHERE id_cliente = ?";
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(url, user, pass);
-            pstmt = conn.prepareStatement(sql);
+            con = getConnection();
+            pstmt = con.prepareStatement(sql);
 
             pstmt.setString(1, cliente.getNombre());
             pstmt.setString(2, cliente.getApellido());
@@ -283,69 +224,62 @@ public class ClienteDao {
             pstmt.setString(5, cliente.getTelefono());
             pstmt.setString(6, cliente.getDireccion());
 
-            // Manejo simple de preferencias (JSON)
             String prefs = cliente.getPreferencias();
-            if (prefs != null && !prefs.trim().isEmpty()) {
-                // Si ya es JSON válido, usarlo directamente; si no, crear estructura básica
-                if (prefs.startsWith("{") && prefs.endsWith("}")) {
-                    pstmt.setString(7, prefs);
-                } else {
-                    pstmt.setString(7, "{\"preferencia\":\"" + prefs.replace("\"", "\\\"") + "\"}");
-                }
+            if (prefs != null && prefs.trim().startsWith("{") && prefs.trim().endsWith("}")) {
+                pstmt.setString(7, prefs);
             } else {
-                pstmt.setString(7, "{}");
+                pstmt.setString(7, "{\"preferencia\":\"" + (prefs != null ? prefs.replace("\"", "\\\"") : "") + "\"}");
             }
 
             pstmt.setInt(8, cliente.getIdCliente());
-
-            int filasAfectadas = pstmt.executeUpdate();
-            exito = (filasAfectadas > 0);
+            exito = (pstmt.executeUpdate() > 0);
 
         } catch (Exception e) {
             System.err.println("Error al actualizar cliente: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            try { if (pstmt != null) pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (conn != null) conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            closeResources(con, pstmt, null);
         }
         return exito;
     }
 
-    // Para ClienteControlador?accion=eliminar
     public boolean eliminarCliente(int idCliente) {
         boolean exito = false;
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmtMascotas = null;
         PreparedStatement pstmtCliente = null;
         String sqlDeleteMascotas = "DELETE FROM mascota WHERE id_cliente = ?";
         String sqlDeleteCliente = "DELETE FROM cliente WHERE id_cliente = ?";
 
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(url, user, pass);
-            conn.setAutoCommit(false); // Iniciar transacción
+            con = getConnection();
+            con.setAutoCommit(false);
 
-            // 1. Eliminar mascotas asociadas (o manejar la restricción FK)
-            pstmtMascotas = conn.prepareStatement(sqlDeleteMascotas);
+            pstmtMascotas = con.prepareStatement(sqlDeleteMascotas);
             pstmtMascotas.setInt(1, idCliente);
-            pstmtMascotas.executeUpdate(); // No importa cuántas se borren
+            pstmtMascotas.executeUpdate(); // Elimina mascotas primero
 
-            // 2. Eliminar cliente
-            pstmtCliente = conn.prepareStatement(sqlDeleteCliente);
+            pstmtCliente = con.prepareStatement(sqlDeleteCliente);
             pstmtCliente.setInt(1, idCliente);
-            int filasAfectadas = pstmtCliente.executeUpdate();
+            exito = (pstmtCliente.executeUpdate() > 0); // Luego elimina cliente
 
-            conn.commit(); // Confirmar transacción
-            exito = (filasAfectadas > 0);
+            con.commit(); // Confirma la transacción
 
         } catch (Exception e) {
-            System.err.println("Error al eliminar cliente: " + e.getMessage());
+            try { if (con != null) con.rollback(); } catch (SQLException se) {}
+            System.err.println("Error al eliminar cliente (rollback): " + e.getMessage());
             e.printStackTrace();
-            try { if (conn != null) conn.rollback(); } catch (SQLException se) { se.printStackTrace(); } // Revertir en caso de error
         } finally {
-            try { if (pstmtMascotas != null) pstmtMascotas.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (pstmtCliente != null) pstmtCliente.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (SQLException e) { e.printStackTrace(); }
+            // Cierra statements en su propio try-catch
+            try { if (pstmtMascotas != null) pstmtMascotas.close(); } catch (SQLException ex) {}
+            try { if (pstmtCliente != null) pstmtCliente.close(); } catch (SQLException ex) {}
+            // Cierra la conexión y restaura auto-commit
+            try { 
+                if (con != null) { 
+                    con.setAutoCommit(true); 
+                    con.close(); 
+                } 
+            } catch (SQLException ex) {}
         }
         return exito;
     }
