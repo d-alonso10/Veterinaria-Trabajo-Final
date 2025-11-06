@@ -12,11 +12,11 @@ public class MascotaDao {
     // --- MANEJO DE CONEXIÓN CENTRALIZADO ---
     private String url = "jdbc:mysql://localhost/vet_teran";
     private String user = "root";
-    private String pass = "";
+    private String pass = ""; // Asegúrate que esta sea tu contraseña
 
     private Connection getConnection() throws SQLException {
         try {
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.jdbc.Driver"); // Driver original
             return DriverManager.getConnection(url, user, pass);
         } catch (ClassNotFoundException e) {
             throw new SQLException("Driver MySQL no encontrado", e);
@@ -92,7 +92,7 @@ public class MascotaDao {
             }
 
         } catch (Exception e) {
-            System.err.println("Error en obtenerMascotasPorCliente");
+            System.err.println("Error en obtenerMascotasPorCliente: " + e.getMessage());
             e.printStackTrace();
         } finally {
             closeResources(con, cstmt, rs);
@@ -137,15 +137,19 @@ public class MascotaDao {
     public List<MascotaBusquedaDTO> buscarMascotas(String termino) {
         List<MascotaBusquedaDTO> mascotas = new ArrayList<>();
         Connection con = null;
-        CallableStatement cstmt = null; // Volver a usar CallableStatement
+        CallableStatement cstmt = null; 
         ResultSet rs = null;
         
-        String sql = "{CALL sp_BuscarMascotas(?)}";
+        // Usamos el SP que ya existe en tu BD
+        String sql = "{CALL sp_BuscarMascotas(?)}"; 
 
         try {
             con = getConnection();
-            cstmt = con.prepareCall(sql); // Usar CallableStatement
-            cstmt.setString(1, termino); // El SP maneja el %LIKE%
+            cstmt = con.prepareCall(sql);
+            
+            // El SP sp_BuscarMascotas ya incluye los '%' internamente
+            cstmt.setString(1, termino); 
+
             rs = cstmt.executeQuery();
 
             while (rs.next()) {
@@ -166,7 +170,7 @@ public class MascotaDao {
             System.err.println("Error en la operación SQL al buscar mascotas");
             e.printStackTrace();
         } finally {
-            closeResources(con, cstmt, rs); // Usar cstmt
+            closeResources(con, cstmt, rs);
         }
         return mascotas;
     }

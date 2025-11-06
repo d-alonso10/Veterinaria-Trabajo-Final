@@ -25,16 +25,18 @@ public class MascotaControlador extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Configurar encoding ANTES de obtener parámetros
         request.setCharacterEncoding("UTF-8");
         // El ContentType se setea en cada método (HTML o JSON)
 
         String acc = request.getParameter("acc");
         String accion = request.getParameter("accion");
 
+        // Manejar inserción con parámetro "acc"
         if (acc != null && acc.equals("Confirmar")) {
             response.setContentType("text/html;charset=UTF-8");
             insertarMascota(request, response);
-        } 
+        } // Manejar otras acciones con el parámetro "accion"
         else if (accion != null) {
             switch (accion) {
                 case "buscar":
@@ -59,6 +61,7 @@ public class MascotaControlador extends HttpServlet {
                     verHistorialMascota(request, response);
                     break;
                     
+                // --- ACCIÓN FALTANTE AÑADIDA (para enlace de menú) ---
                 case "mostrarFormulario":
                     response.setContentType("text/html;charset=UTF-8");
                     mostrarFormulario(request, response);
@@ -66,10 +69,12 @@ public class MascotaControlador extends HttpServlet {
                     
                 default:
                     response.setContentType("text/html;charset=UTF-8");
-                    mostrarFormulario(request, response); // Acción por defecto
+                    // Redirigir a un JSP de formulario si la acción no es reconocida
+                    System.out.println("Acción no reconocida, mostrando formulario por defecto.");
+                    mostrarFormulario(request, response);
             }
         } else {
-            // Acción por defecto si no hay parámetros
+            // Acción por defecto: mostrar el formulario de inserción
             response.setContentType("text/html;charset=UTF-8");
             mostrarFormulario(request, response);
         }
@@ -80,6 +85,7 @@ public class MascotaControlador extends HttpServlet {
             throws ServletException, IOException {
         String vistaError = "InsertarMascota.jsp";
         try {
+            // Obtener y limpiar parámetros
             String idClienteStr = limpiarParametro(request.getParameter("idCliente"));
             String nombre = limpiarParametro(request.getParameter("nombre"));
             String especie = limpiarParametro(request.getParameter("especie"));
@@ -89,6 +95,7 @@ public class MascotaControlador extends HttpServlet {
             String microchip = limpiarParametro(request.getParameter("microchip"));
             String observaciones = limpiarParametro(request.getParameter("observaciones"));
 
+            // Validaciones
             if (idClienteStr.isEmpty() || nombre.isEmpty() || especie.isEmpty()) {
                 request.setAttribute("mensaje", "❌ Error: ID Cliente, Nombre y Especie son obligatorios");
                 request.setAttribute("tipoMensaje", "error");
@@ -96,6 +103,7 @@ public class MascotaControlador extends HttpServlet {
                 return;
             }
 
+            // Convertir ID Cliente
             int idCliente;
             try {
                 idCliente = Integer.parseInt(idClienteStr);
@@ -106,6 +114,7 @@ public class MascotaControlador extends HttpServlet {
                 return;
             }
 
+            // Crear mascota
             Mascota mascota = new Mascota();
             mascota.setIdCliente(idCliente);
             mascota.setNombre(nombre);
@@ -113,11 +122,13 @@ public class MascotaControlador extends HttpServlet {
             mascota.setRaza(raza);
             mascota.setSexo(sexo);
 
+            // Convertir fecha si está presente
             if (fechaNacimiento != null && !fechaNacimiento.isEmpty()) {
                 try {
                     java.sql.Date fechaNac = java.sql.Date.valueOf(fechaNacimiento);
                     mascota.setFechaNacimiento(fechaNac);
                 } catch (IllegalArgumentException e) {
+                    // Si la fecha no es válida, se deja como null
                     System.out.println("Fecha de nacimiento no válida: " + fechaNacimiento);
                 }
             }
@@ -125,10 +136,12 @@ public class MascotaControlador extends HttpServlet {
             mascota.setMicrochip(microchip);
             mascota.setObservaciones(observaciones);
 
+            // Insertar
             MascotaDao dao = new MascotaDao();
             boolean exito = dao.insertarMascota(mascota);
 
             if (exito) {
+                // Patrón Post-Redirect-Get
                 response.sendRedirect(request.getContextPath() + "/MascotaControlador?accion=listarTodas&creado=exito");
             } else {
                 request.setAttribute("mensaje", "❌ Error al insertar mascota");
@@ -149,6 +162,7 @@ public class MascotaControlador extends HttpServlet {
             throws ServletException, IOException {
         String vista = "ListaMascotas.jsp";
         try {
+            // Verificar si viene de una creación exitosa
             String creado = request.getParameter("creado");
             if ("exito".equals(creado)) {
                 request.setAttribute("mensaje", "✅ Mascota creada exitosamente");
@@ -156,12 +170,15 @@ public class MascotaControlador extends HttpServlet {
             }
             
             String termino = request.getParameter("termino");
+
             MascotaDao dao = new MascotaDao();
             List<MascotaBusquedaDTO> mascotas;
 
             if (termino == null || termino.trim().isEmpty()) {
+                // Si no hay término, cargar todas las mascotas (el SP lo maneja)
                 mascotas = dao.buscarMascotas("");
             } else {
+                // Si hay término, buscar
                 mascotas = dao.buscarMascotas(termino.trim());
                 request.setAttribute("terminoBusqueda", termino);
             }
@@ -170,11 +187,13 @@ public class MascotaControlador extends HttpServlet {
             request.setAttribute("totalResultados", mascotas != null ? mascotas.size() : 0);
 
         } catch (Exception e) {
-            request.setAttribute("mascotas", new ArrayList<>()); 
+            request.setAttribute("mascotas", new ArrayList<>()); // Enviar lista vacía en error
             request.setAttribute("totalResultados", 0);
             request.setAttribute("mensaje", "❌ Error al buscar mascotas: " + e.getMessage());
             request.setAttribute("tipoMensaje", "error");
         }
+
+        // Redirigir al JSP que muestra la tabla completa
         request.getRequestDispatcher(vista).forward(request, response);
     }
 
@@ -207,6 +226,7 @@ public class MascotaControlador extends HttpServlet {
             request.setAttribute("mensaje", "❌ Error al cargar mascotas del cliente: " + e.getMessage());
             request.setAttribute("tipoMensaje", "error");
         }
+
         request.getRequestDispatcher(vista).forward(request, response);
     }
 
@@ -242,10 +262,13 @@ public class MascotaControlador extends HttpServlet {
                     jsonMascota.put("idMascota", mascota.getIdMascota());
                     jsonMascota.put("nombre", mascota.getNombre());
                     jsonMascota.put("especie", mascota.getEspecie());
+                    // Puedes añadir más campos si los necesitas en el JSP
+                    // jsonMascota.put("raza", mascota.getRaza()); 
                     jsonArray.put(jsonMascota);
                 }
             }
             
+            // Escribir el JSON en la respuesta
             out.print(jsonArray.toString());
 
         } catch (NumberFormatException e) {
@@ -256,7 +279,7 @@ public class MascotaControlador extends HttpServlet {
             out.print("{\"error\":\"Error del servidor: " + e.getMessage() + "\"}");
             e.printStackTrace();
         } finally {
-            out.flush();
+            out.flush(); // Asegurarse de que se envíe la respuesta
         }
     }
     // --- FIN NUEVO MÉTODO ---
@@ -296,6 +319,7 @@ public class MascotaControlador extends HttpServlet {
     // --- NUEVO MÉTODO PARA MOSTRAR FORMULARIO ---
     private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Simplemente reenvía al JSP de inserción
         request.getRequestDispatcher("InsertarMascota.jsp").forward(request, response);
     }
     

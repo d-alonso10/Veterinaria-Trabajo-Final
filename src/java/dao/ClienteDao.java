@@ -255,15 +255,21 @@ public class ClienteDao {
             con = getConnection();
             con.setAutoCommit(false);
 
+            // 1. Borrar registros dependientes (mascotas)
+            // NOTA: Esto fallará si la mascota tiene 'atenciones' y no tienes ON DELETE CASCADE
+            // Tu SQL no define ON DELETE, así que esto es peligroso.
+            // Una mejor práctica sería anonimizar o desactivar al cliente.
             pstmtMascotas = con.prepareStatement(sqlDeleteMascotas);
             pstmtMascotas.setInt(1, idCliente);
-            pstmtMascotas.executeUpdate(); // Elimina mascotas primero
+            pstmtMascotas.executeUpdate(); 
 
+            // 2. Borrar al cliente
             pstmtCliente = con.prepareStatement(sqlDeleteCliente);
             pstmtCliente.setInt(1, idCliente);
-            exito = (pstmtCliente.executeUpdate() > 0); // Luego elimina cliente
+            int filasBorradas = pstmtCliente.executeUpdate();
+            exito = (filasBorradas > 0);
 
-            con.commit(); // Confirma la transacción
+            con.commit(); // Confirmar la transacción
 
         } catch (Exception e) {
             try { if (con != null) con.rollback(); } catch (SQLException se) {}
